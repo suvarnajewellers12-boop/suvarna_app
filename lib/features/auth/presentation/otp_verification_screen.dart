@@ -19,6 +19,7 @@ class OtpVerificationScreen extends StatefulWidget {
 
 class _OtpVerificationScreenState
     extends State<OtpVerificationScreen> {
+
   final List<TextEditingController> _controllers =
   List.generate(6, (_) => TextEditingController());
 
@@ -43,19 +44,21 @@ class _OtpVerificationScreenState
   }
 
   void _verifyOtp() async {
-    if (_otp.length != 6) return;
+    if (!_isOtpComplete) return;
 
     setState(() => _isLoading = true);
 
-    final response = await AuthService.verifySignupOtp(
-      otp: _otp,
-    );
+    final response =
+    await AuthService.verifySignupOtp(otp: _otp);
 
     setState(() => _isLoading = false);
 
     if (!response.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.message ?? "Invalid OTP")),
+        SnackBar(
+          content:
+          Text(response.message ?? "Invalid OTP"),
+        ),
       );
       return;
     }
@@ -87,6 +90,8 @@ class _OtpVerificationScreenState
     return Scaffold(
       body: Stack(
         children: [
+
+          /// Background
           Positioned.fill(
             child: Image.asset(
               "assets/images/showroom_bg.png",
@@ -94,13 +99,14 @@ class _OtpVerificationScreenState
             ),
           ),
 
+          /// Premium Blur Overlay
           Positioned.fill(
             child: BackdropFilter(
-              filter:
-              ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+              filter: ImageFilter.blur(
+                  sigmaX: 6, sigmaY: 6),
               child: Container(
                 color: const Color(0xFFF5EBDD)
-                    .withValues(alpha: 0.65),
+                    .withOpacity(0.65),
               ),
             ),
           ),
@@ -115,18 +121,18 @@ class _OtpVerificationScreenState
                       horizontal: 24, vertical: 26),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8F3E8)
-                        .withValues(alpha: 0.96),
+                        .withOpacity(0.96),
                     borderRadius:
                     BorderRadius.circular(24),
                     border: Border.all(
                       color: const Color(0xFFD4AF37)
-                          .withValues(alpha: 0.6),
+                          .withOpacity(0.6),
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black
-                            .withValues(alpha: 0.08),
+                            .withOpacity(0.08),
                         blurRadius: 20,
                         offset:
                         const Offset(0, 8),
@@ -137,6 +143,8 @@ class _OtpVerificationScreenState
                     mainAxisSize:
                     MainAxisSize.min,
                     children: [
+
+                      /// Back
                       Align(
                         alignment:
                         Alignment.centerLeft,
@@ -159,10 +167,12 @@ class _OtpVerificationScreenState
                                   width: 6),
                               Text(
                                 "Back",
-                                style: GoogleFonts
+                                style:
+                                GoogleFonts
                                     .poppins(
                                   fontSize: 13,
-                                  color: const Color(
+                                  color:
+                                  const Color(
                                       0xFF6E665A),
                                 ),
                               ),
@@ -173,9 +183,11 @@ class _OtpVerificationScreenState
 
                       const SizedBox(height: 22),
 
+                      /// Title
                       Text(
                         "Create Account",
-                        style: GoogleFonts
+                        style:
+                        GoogleFonts
                             .playfairDisplay(
                           fontSize: 27,
                           fontWeight:
@@ -188,10 +200,11 @@ class _OtpVerificationScreenState
 
                       const SizedBox(height: 8),
 
+                      /// Subtitle
                       Text(
                         "Verify the OTP sent to your phone",
-                        style: GoogleFonts
-                            .poppins(
+                        style:
+                        GoogleFonts.poppins(
                           fontSize: 13,
                           color: const Color(
                               0xFFA79E91),
@@ -200,95 +213,104 @@ class _OtpVerificationScreenState
 
                       const SizedBox(height: 26),
 
+                      /// OTP BOXES
                       Row(
                         mainAxisAlignment:
                         MainAxisAlignment
                             .spaceBetween,
-                        children: List.generate(
+                        children:
+                        List.generate(
                           6,
-                              (index) => SizedBox(
-                            width: 44,
-                            height: 54,
-                            child: TextField(
-                              controller:
-                              _controllers[
-                              index],
-                              focusNode:
-                              _focusNodes[
-                              index],
-                              keyboardType:
-                              TextInputType
-                                  .number,
-                              maxLength: 1,
-                              textAlign:
-                              TextAlign.center,
-                              style: GoogleFonts
-                                  .poppins(
-                                fontSize: 18,
-                                fontWeight:
-                                FontWeight
-                                    .w600,
-                                color:
-                                const Color(
-                                    0xFF3B2A1F),
-                              ),
-                              decoration:
-                              InputDecoration(
-                                counterText:
-                                '',
-                                filled: true,
-                                fillColor:
-                                const Color(
-                                    0xFFF5EBDD),
-                                contentPadding:
-                                EdgeInsets.zero,
-                                enabledBorder:
-                                OutlineInputBorder(
-                                  borderRadius:
-                                  BorderRadius
-                                      .circular(
-                                      18),
-                                  borderSide:
-                                  BorderSide(
+                              (index) =>
+                              SizedBox(
+                                width: 44,
+                                height: 54,
+                                child: TextField(
+                                  controller:
+                                  _controllers[
+                                  index],
+                                  focusNode:
+                                  _focusNodes[
+                                  index],
+                                  keyboardType:
+                                  TextInputType
+                                      .number,
+                                  maxLength: 1,
+                                  textAlign:
+                                  TextAlign
+                                      .center,
+                                  style:
+                                  GoogleFonts
+                                      .poppins(
+                                    fontSize: 18,
+                                    fontWeight:
+                                    FontWeight
+                                        .w600,
                                     color: const Color(
-                                        0xFFE6C979)
-                                        .withValues(
-                                        alpha:
-                                        0.5),
-                                    width: 1,
+                                        0xFF3B2A1F),
                                   ),
-                                ),
-                                focusedBorder:
-                                const OutlineInputBorder(
-                                  borderRadius:
-                                  BorderRadius
-                                      .all(
-                                    Radius
-                                        .circular(
-                                        18),
+                                  decoration:
+                                  InputDecoration(
+                                    counterText:
+                                    '',
+                                    filled:
+                                    true,
+                                    fillColor:
+                                    const Color(
+                                        0xFFF5EBDD),
+                                    contentPadding:
+                                    EdgeInsets
+                                        .zero,
+                                    enabledBorder:
+                                    OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius
+                                          .circular(
+                                          18),
+                                      borderSide:
+                                      BorderSide(
+                                        color: const Color(
+                                            0xFFE6C979)
+                                            .withOpacity(
+                                            0.5),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    focusedBorder:
+                                    const OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius
+                                          .all(
+                                        Radius
+                                            .circular(
+                                            18),
+                                      ),
+                                      borderSide:
+                                      BorderSide(
+                                        color: Color(
+                                            0xFFD4AF37),
+                                        width: 1.5,
+                                      ),
+                                    ),
                                   ),
-                                  borderSide:
-                                  BorderSide(
-                                    color: Color(
-                                        0xFFD4AF37),
-                                    width: 1.5,
-                                  ),
+                                  onChanged:
+                                      (value) =>
+                                      _onOtpChanged(
+                                          index,
+                                          value),
                                 ),
                               ),
-                              onChanged: (value) =>
-                                  _onOtpChanged(
-                                      index,
-                                      value),
-                            ),
-                          ),
                         ),
                       ),
 
                       const SizedBox(height: 28),
 
+                      /// VERIFY BUTTON
                       SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
+                        width:
+                        double.infinity,
+                        child:
+                        ElevatedButton(
                           onPressed:
                           _isOtpComplete &&
                               !_isLoading
@@ -303,8 +325,7 @@ class _OtpVerificationScreenState
                                 0xFFD4AF37)
                                 : const Color(
                                 0xFFD4AF37)
-                                .withValues(
-                                alpha:
+                                .withOpacity(
                                 0.4),
                             foregroundColor:
                             Colors.white,
@@ -330,7 +351,8 @@ class _OtpVerificationScreenState
                             CircularProgressIndicator(
                               strokeWidth:
                               2,
-                              color: Colors
+                              color:
+                              Colors
                                   .white,
                             ),
                           )
@@ -371,7 +393,8 @@ class _OtpVerificationScreenState
                                 context),
                         child: Text(
                           "Go back",
-                          style: GoogleFonts
+                          style:
+                          GoogleFonts
                               .poppins(
                             fontSize: 13,
                             color: const Color(
