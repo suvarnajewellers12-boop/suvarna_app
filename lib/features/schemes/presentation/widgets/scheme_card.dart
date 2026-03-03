@@ -14,90 +14,100 @@ class SchemeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final displayedBenefits =
+    scheme.benefits.length > 2
+        ? scheme.benefits.take(2).toList()
+        : scheme.benefits;
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(22),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFF6F0E4).withOpacity(0.97),
-          borderRadius: BorderRadius.circular(28),
+          border: Border.all(
+            color: const Color(0xFFD4AF37),
+            width: 0.6,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 25,
-              offset: const Offset(0, 10),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Column(
           children: [
-            /// GOLD TOP STRIP (now perfectly clipped to card radius)
+
+            /// Gold top strip (now perfectly clipped)
             Container(
-              height: 4,
+              height: 3,
               width: double.infinity,
               color: const Color(0xFFD4AF37),
             ),
 
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 26),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 16,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// TITLE
+
                   Text(
                     scheme.title,
                     style: GoogleFonts.playfairDisplay(
-                      fontSize: 24,
+                      fontSize: 19,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF3B2A1F),
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
-                  /// Duration + Min Amount
                   Row(
                     children: [
                       const Icon(Icons.access_time,
-                          size: 16, color: Color(0xFFD4AF37)),
-                      const SizedBox(width: 6),
+                          size: 14, color: Color(0xFFD4AF37)),
+                      const SizedBox(width: 5),
                       Text(
                         scheme.duration,
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: const Color(0xFF6E665A),
                         ),
                       ),
-                      const SizedBox(width: 24),
+                      const SizedBox(width: 16),
                       const Icon(Icons.shield_outlined,
-                          size: 16, color: Color(0xFFD4AF37)),
-                      const SizedBox(width: 6),
+                          size: 14, color: Color(0xFFD4AF37)),
+                      const SizedBox(width: 5),
                       Text(
                         "Min. ${scheme.minAmount}",
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: 12,
                           color: const Color(0xFF6E665A),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 14),
 
-                  /// BENEFITS
-                  ...scheme.benefits.map(
+                  ...displayedBenefits.map(
                         (b) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 6),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.card_giftcard,
-                              size: 16, color: Color(0xFFD4AF37)),
-                          const SizedBox(width: 10),
+                              size: 14, color: Color(0xFFD4AF37)),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               b,
                               style: GoogleFonts.poppins(
-                                fontSize: 14.5,
+                                fontSize: 13,
                                 color: const Color(0xFF5E564A),
                               ),
                             ),
@@ -107,26 +117,35 @@ class SchemeCard extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 26),
+                  if (scheme.benefits.length > 2)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        "+ ${scheme.benefits.length - 2} more benefits",
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: const Color(0xFF8C8578),
+                        ),
+                      ),
+                    ),
 
-                  /// ENROLL BUTTON
+                  const SizedBox(height: 16),
+
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: onEnroll,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD4AF37),
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(18),
                         ),
-                        elevation: 0,
                       ),
                       child: Text(
-                        "Enroll Now",
+                        "Enroll",
                         style: GoogleFonts.poppins(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),

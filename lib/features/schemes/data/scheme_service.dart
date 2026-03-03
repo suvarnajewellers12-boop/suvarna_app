@@ -1,8 +1,14 @@
 import 'scheme_model.dart';
 
 class SchemeService {
-  static List<SchemeModel> getSchemes() {
+
+  static Future<List<SchemeModel>> getSchemes() async {
+
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 800));
+
     return const [
+
       SchemeModel(
         title: "Suvarna Gold Savings",
         duration: "11 Months",
@@ -13,6 +19,7 @@ class SchemeService {
           "No making charges on select items",
         ],
       ),
+
       SchemeModel(
         title: "Suvarna Diamond Plan",
         duration: "18 Months",
@@ -23,6 +30,7 @@ class SchemeService {
           "Free hallmarking",
         ],
       ),
+
       SchemeModel(
         title: "Suvarna Heritage Plan",
         duration: "24 Months",
@@ -34,6 +42,7 @@ class SchemeService {
           "Personal jewellery advisor",
         ],
       ),
+
     ];
   }
 }
