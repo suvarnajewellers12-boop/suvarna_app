@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'auth_choice_screen.dart';
+import '../core/session_manager.dart';
+import '../features/auth/presentation/mpin_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -48,9 +50,30 @@ class _SplashScreenState extends State<SplashScreen>
     _mainController.forward();
 
 
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/auth');
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted) return;
+
+      final isLoggedIn = await SessionManager.isLoggedIn();
+
+      if (isLoggedIn) {
+        final username = await SessionManager.getUsername();
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MPinScreen(
+              mode: MPinMode.verify,
+              username: username ?? '',
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AuthChoiceScreen(),
+          ),
+        );
       }
     });
   }

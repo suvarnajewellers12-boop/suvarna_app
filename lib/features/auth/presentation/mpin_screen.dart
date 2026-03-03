@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../screens/home_screen.dart';
 import '../data/auth_service.dart';
+import '../../../core/session_manager.dart';
 
 enum MPinMode { setup, verify }
 
@@ -89,21 +90,36 @@ class _MPinScreenState extends State<MPinScreen> {
   }
 
   void _onComplete(String mpin) async {
-    if (widget.mode == MPinMode.setup) {
-      final response = await AuthService.setMpin(
-        username: widget.username,
-        mpin: mpin,
-      );
 
-      if (!response.success) {
+    // ================= SETUP MODE =================
+    if (widget.mode == MPinMode.setup) {
+
+      // Save MPIN locally
+      await SessionManager.saveMpin(mpin);
+
+      // Save login session
+      await SessionManager.saveLoginSession(widget.username);
+    }
+
+    // ================= VERIFY MODE =================
+    if (widget.mode == MPinMode.verify) {
+
+      final savedMpin = await SessionManager.getMpin();
+
+      if (savedMpin == null || savedMpin != mpin) {
         setState(() {
-          _error = response.message ?? "Failed to set MPIN";
+          _error = "Incorrect MPIN";
+          _mpin = '';
+          _confirmMpin = '';
+          _isConfirmStep = false;
         });
         return;
       }
+
+      // Ensure session remains active
+      await SessionManager.saveLoginSession(widget.username);
     }
 
-    // For verify mode OR successful setup
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(

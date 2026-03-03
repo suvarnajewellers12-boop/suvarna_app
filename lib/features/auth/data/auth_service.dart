@@ -1,9 +1,7 @@
-import 'dart:async';
 import 'auth_models.dart';
+import 'local_auth_database.dart';
 
 class AuthService {
-  /// Temporary in-memory user storage (mock database)
-  static final Map<String, Map<String, dynamic>> _mockUsers = {};
 
   /// =========================
   /// REGISTER
@@ -14,15 +12,6 @@ class AuthService {
     required String mobile,
     required String password,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
-
-    // Username already exists
-    if (_mockUsers.containsKey(username)) {
-      return AuthResponse(
-        success: false,
-        message: "Username already exists",
-      );
-    }
 
     if (password.length < 6) {
       return AuthResponse(
@@ -31,14 +20,33 @@ class AuthService {
       );
     }
 
-    // Store mock user
-    _mockUsers[username] = {
+    final existingUser =
+    await LocalAuthDatabase.findByUsername(username);
+
+    if (existingUser != null) {
+      return AuthResponse(
+        success: false,
+        message: "Username already exists",
+      );
+    }
+
+    final existingMobile =
+    await LocalAuthDatabase.findByMobile(mobile);
+
+    if (existingMobile != null) {
+      return AuthResponse(
+        success: false,
+        message: "Mobile already registered",
+      );
+    }
+
+    await LocalAuthDatabase.addUser({
       "username": username,
       "fullName": fullName,
       "mobile": mobile,
       "password": password,
       "mpin": null,
-    };
+    });
 
     return AuthResponse(
       success: true,
@@ -52,7 +60,6 @@ class AuthService {
   static Future<AuthResponse> verifySignupOtp({
     required String otp,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
 
     if (otp != "123456") {
       return AuthResponse(
@@ -71,16 +78,19 @@ class AuthService {
     required String username,
     required String mpin,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
 
-    if (!_mockUsers.containsKey(username)) {
+    final user =
+    await LocalAuthDatabase.findByUsername(username);
+
+    if (user == null) {
       return AuthResponse(
         success: false,
         message: "User not found",
       );
     }
 
-    _mockUsers[username]!["mpin"] = mpin;
+    user["mpin"] = mpin;
+    await LocalAuthDatabase.updateUser(user);
 
     return AuthResponse(success: true);
   }
@@ -92,32 +102,31 @@ class AuthService {
     required String identifier,
     required String password,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
 
-    try {
-      final user = _mockUsers.values.firstWhere(
-            (u) =>
-        u["username"] == identifier ||
-            u["mobile"] == identifier,
-      );
+    Map<String, dynamic>? user =
+    await LocalAuthDatabase.findByUsername(identifier);
 
-      if (user["password"] != password) {
-        return AuthResponse(
-          success: false,
-          message: "Incorrect password",
-        );
-      }
+    user ??=
+    await LocalAuthDatabase.findByMobile(identifier);
 
-      return AuthResponse(
-        success: true,
-        username: user["username"],
-      );
-    } catch (e) {
+    if (user == null) {
       return AuthResponse(
         success: false,
         message: "User not found",
       );
     }
+
+    if (user["password"] != password) {
+      return AuthResponse(
+        success: false,
+        message: "Incorrect password",
+      );
+    }
+
+    return AuthResponse(
+      success: true,
+      username: user["username"],
+    );
   }
 
   /// =========================
@@ -126,12 +135,32 @@ class AuthService {
   static Future<AuthResponse> verifyLoginOtp({
     required String otp,
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
 
     if (otp != "123456") {
       return AuthResponse(
         success: false,
         message: "Invalid OTP",
+      );
+    }
+
+    return AuthResponse(success: true);
+  }
+
+  /// =========================
+  /// VERIFY MPIN
+  /// =========================
+  static Future<AuthResponse> verifyMpin({
+    required String username,
+    required String mpin,
+  }) async {
+
+    final user =
+    await LocalAuthDatabase.findByUsername(username);
+
+    if (user == null || user["mpin"] != mpin) {
+      return AuthResponse(
+        success: false,
+        message: "Incorrect MPIN",
       );
     }
 

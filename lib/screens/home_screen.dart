@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'auth_choice_screen.dart';
+import '../core/session_manager.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -15,10 +16,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  void _onLogout() {
+  void _onLogout() async {
+    await SessionManager.clearSession();
+
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (_) => const AuthChoiceScreen()),
+      MaterialPageRoute(
+        builder: (_) => const AuthChoiceScreen(),
+      ),
           (route) => false,
     );
   }
