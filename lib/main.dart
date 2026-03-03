@@ -6,6 +6,9 @@ import 'features/auth/presentation/signup_form_screen.dart';
 import 'features/auth/presentation/otp_verification_screen.dart';
 // import 'features/auth/presentation/mpin_creation_screen.dart';
 
+// 🔥 NEW IMPORT ADDED (Schemes Feature)
+import 'features/schemes/presentation/schemes_screen.dart';
+
 void main() {
   runApp(const SuvarnaApp());
 }
@@ -24,6 +27,9 @@ class SuvarnaApp extends StatelessWidget {
         '/auth': (context) => const AuthChoiceScreen(),
         '/signup': (context) => const SignUpFormScreen(),
         // '/mpin': (context) => const MPinCreationScreen(),
+
+        // 🔥 NEW ROUTE ADDED (No removal of anything)
+        '/schemes': (context) => const SchemesScreen(),
       },
     );
   }

@@ -94,8 +94,7 @@ class _MPinScreenState extends State<MPinScreen> {
     // ================= SETUP MODE =================
     if (widget.mode == MPinMode.setup) {
 
-      // Save MPIN locally
-      await SessionManager.saveMpin(mpin);
+      await SessionManager.saveMpin(widget.username, mpin);
 
       // Save login session
       await SessionManager.saveLoginSession(widget.username);
@@ -104,7 +103,7 @@ class _MPinScreenState extends State<MPinScreen> {
     // ================= VERIFY MODE =================
     if (widget.mode == MPinMode.verify) {
 
-      final savedMpin = await SessionManager.getMpin();
+      final savedMpin = await SessionManager.getMpin(widget.username);
 
       if (savedMpin == null || savedMpin != mpin) {
         setState(() {

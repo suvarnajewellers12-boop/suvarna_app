@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../screens/home_screen.dart';
 import '../data/auth_service.dart';
+import '../../../core/session_manager.dart';
+import 'mpin_screen.dart';
 
 class LoginOtpScreen extends StatefulWidget {
   final String username;
@@ -53,14 +55,19 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       return;
     }
 
+    await SessionManager.saveLoginSession(widget.username);
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => HomeScreen(username: widget.username),
+        builder: (_) => MPinScreen(
+          mode: MPinMode.verify,
+          username: widget.username,
+        ),
       ),
           (route) => false,
     );
-  }
+  } // ✅ THIS WAS MISSING
 
   @override
   void dispose() {
@@ -84,7 +91,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
               fit: BoxFit.cover,
             ),
           ),
-
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -93,7 +99,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
               ),
             ),
           ),
-
           SafeArea(
             child: Center(
               child: Padding(
@@ -118,8 +123,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-
-                      /// Back
                       Align(
                         alignment: Alignment.centerLeft,
                         child: GestureDetector(
@@ -144,10 +147,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
-
-                      /// Title
                       Text(
                         "Verify OTP",
                         style: GoogleFonts.playfairDisplay(
@@ -156,9 +156,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                           color: const Color(0xFF3B2A1F),
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
                       Text(
                         "Enter the OTP sent to your phone",
                         style: GoogleFonts.poppins(
@@ -166,22 +164,16 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                           color: const Color(0xFFA79E91),
                         ),
                       ),
-
                       const SizedBox(height: 28),
-
-                      /// ✅ RESPONSIVE OTP ROW (NO OVERFLOW EVER)
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          double totalWidth = constraints.maxWidth;
-                          double boxWidth =
-                              (totalWidth - (5 * 10)) / 6;
-
                           return Row(
                             children: List.generate(
                               6,
                                   (index) => Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
                                   child: SizedBox(
                                     height: 54,
                                     child: TextField(
@@ -198,24 +190,35 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                                       decoration: InputDecoration(
                                         counterText: "",
                                         filled: true,
-                                        fillColor: const Color(0xFFF5EBDD),
-                                        contentPadding: EdgeInsets.zero,
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(18),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFE7C98C),
+                                        fillColor:
+                                        const Color(0xFFF5EBDD),
+                                        contentPadding:
+                                        EdgeInsets.zero,
+                                        enabledBorder:
+                                        OutlineInputBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(18),
+                                          borderSide:
+                                          const BorderSide(
+                                            color:
+                                            Color(0xFFE7C98C),
                                           ),
                                         ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(18),
-                                          borderSide: const BorderSide(
-                                            color: Color(0xFFD4AF37),
+                                        focusedBorder:
+                                        OutlineInputBorder(
+                                          borderRadius:
+                                          BorderRadius.circular(18),
+                                          borderSide:
+                                          const BorderSide(
+                                            color:
+                                            Color(0xFFD4AF37),
                                             width: 1.4,
                                           ),
                                         ),
                                       ),
                                       onChanged: (value) =>
-                                          _onOtpChanged(index, value),
+                                          _onOtpChanged(
+                                              index, value),
                                     ),
                                   ),
                                 ),
@@ -224,7 +227,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                           );
                         },
                       ),
-
                       if (_error != null) ...[
                         const SizedBox(height: 14),
                         Text(
@@ -235,25 +237,29 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                           ),
                         ),
                       ],
-
                       const SizedBox(height: 30),
-
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _verifyOtp,
+                          onPressed:
+                          _isLoading ? null : _verifyOtp,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFCF9B2E),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            backgroundColor:
+                            const Color(0xFFCF9B2E),
+                            padding:
+                            const EdgeInsets.symmetric(
+                                vertical: 15),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius:
+                              BorderRadius.circular(24),
                             ),
                           ),
                           child: _isLoading
                               ? const SizedBox(
                             height: 20,
                             width: 20,
-                            child: CircularProgressIndicator(
+                            child:
+                            CircularProgressIndicator(
                               strokeWidth: 2,
                               color: Colors.white,
                             ),
@@ -262,7 +268,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                             "Verify OTP",
                             style: GoogleFonts.poppins(
                               fontSize: 15.5,
-                              fontWeight: FontWeight.w600,
+                              fontWeight:
+                              FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),
