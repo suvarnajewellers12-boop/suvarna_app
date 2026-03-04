@@ -6,6 +6,9 @@ import 'auth_choice_screen.dart';
 import '../features/schemes/models/enrolled_scheme.dart';
 import '../features/schemes/presentation/schemes_screen.dart';
 import '../features/schemes/data/enrolled_scheme_service.dart';
+import '../features/products/presentation/products_screen.dart';
+import '../features/rates/presentation/rates_screen.dart';
+import 'package:suvarna_jewellers/features/profile/presentation/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String username;
@@ -75,10 +78,10 @@ class _HomeScreenState extends State<HomeScreen> {
               index: _currentIndex,
               children: [
                 _buildHomeContent(),
-                _placeholder("Products"),
+                 ProductsScreen(),
                 const SchemesScreen(),
-                _placeholder("Rates"),
-                _buildProfile(),
+                RatesScreen(),
+                const ProfileScreen(),
               ],
             ),
           ),

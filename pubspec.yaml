@@ -58,6 +58,15 @@ flutter:
   assets:
     - assets/images/suvarna_logo.png
     - assets/images/showroom_bg.png
+    - assets/images/products/gold_necklace.png
+    - assets/images/products/gold_bangles.png
+    - assets/images/products/gold_ring.png
+    - assets/images/products/gold_chain.png
+    - assets/images/products/gold_earrings.png
+    - assets/images/products/silver_idol.png
+    - assets/images/products/silver_bangles.png
+    - assets/images/products/silver_chain.png
+    - assets/images/products/silver_ring.png
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
