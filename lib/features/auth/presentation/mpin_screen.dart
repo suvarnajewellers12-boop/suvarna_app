@@ -122,9 +122,7 @@ class _MPinScreenState extends State<MPinScreen> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => HomeScreen(
-          username: widget.username,
-        ),
+        builder: (_) => const HomeScreen(),
       ),
           (route) => false,
     );

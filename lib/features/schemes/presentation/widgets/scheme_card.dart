@@ -14,12 +14,6 @@ class SchemeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
-    final displayedBenefits =
-    scheme.benefits.length > 2
-        ? scheme.benefits.take(2).toList()
-        : scheme.benefits;
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(22),
       child: Container(
@@ -32,15 +26,13 @@ class SchemeCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 14,
+              blurRadius: 10,
               offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Column(
           children: [
-
-            /// Gold top strip (now perfectly clipped)
             Container(
               height: 3,
               width: double.infinity,
@@ -50,86 +42,103 @@ class SchemeCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 18,
-                vertical: 16,
+                vertical: 20,
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  Text(
-                    scheme.title,
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF3B2A1F),
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFE7D7A8),
+                        width: 4,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "0/${scheme.durationMonths}",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF3B2A1F),
+                        ),
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 18),
+
+                  Text(
+                    scheme.name,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF3B2A1F),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: "₹${scheme.monthlyAmount}",
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFD4AF37),
+                          ),
+                        ),
+                        TextSpan(
+                          text: "/month",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: const Color(0xFF7A7267),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
 
                   Row(
                     children: [
-                      const Icon(Icons.access_time,
-                          size: 14, color: Color(0xFFD4AF37)),
-                      const SizedBox(width: 5),
+                      const Icon(Icons.check,
+                          size: 16, color: Color(0xFFD4AF37)),
+                      const SizedBox(width: 8),
                       Text(
-                        scheme.duration,
+                        "${scheme.durationMonths} monthly installments",
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: const Color(0xFF6E665A),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.shield_outlined,
-                          size: 14, color: Color(0xFFD4AF37)),
-                      const SizedBox(width: 5),
-                      Text(
-                        "Min. ${scheme.minAmount}",
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: const Color(0xFF6E665A),
+                          fontSize: 13,
+                          color: const Color(0xFF5E564A),
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
 
-                  ...displayedBenefits.map(
-                        (b) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.card_giftcard,
-                              size: 14, color: Color(0xFFD4AF37)),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              b,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: const Color(0xFF5E564A),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  if (scheme.benefits.length > 2)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        "+ ${scheme.benefits.length - 2} more benefits",
+                  Row(
+                    children: [
+                      const Icon(Icons.auto_awesome,
+                          size: 16, color: Color(0xFFD4AF37)),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Get Maturity Value: ₹${scheme.maturityAmount}",
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: const Color(0xFF8C8578),
+                          fontSize: 13,
+                          color: const Color(0xFF5E564A),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 22),
 
                   SizedBox(
                     width: double.infinity,
@@ -137,15 +146,15 @@ class SchemeCard extends StatelessWidget {
                       onPressed: onEnroll,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFD4AF37),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(22),
                         ),
                       ),
                       child: Text(
-                        "Enroll",
+                        "Enroll Now",
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),

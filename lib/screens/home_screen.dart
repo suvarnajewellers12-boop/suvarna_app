@@ -1,19 +1,20 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../core/session_manager.dart';
-import 'auth_choice_screen.dart';
-import '../features/schemes/models/enrolled_scheme.dart';
-import '../features/schemes/presentation/schemes_screen.dart';
-import '../features/schemes/data/enrolled_scheme_service.dart';
-import '../features/products/presentation/products_screen.dart';
-import '../features/rates/presentation/rates_screen.dart';
+
+import 'package:suvarna_jewellers/core/session_manager.dart';
+import 'package:suvarna_jewellers/screens/auth_choice_screen.dart';
+
+import 'package:suvarna_jewellers/features/schemes/models/enrolled_scheme.dart';
+import 'package:suvarna_jewellers/features/schemes/data/enrolled_scheme_service.dart';
+import 'package:suvarna_jewellers/features/schemes/presentation/schemes_screen.dart';
+
+import 'package:suvarna_jewellers/features/products/presentation/products_screen.dart';
+import 'package:suvarna_jewellers/features/rates/presentation/rates_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String username;
-
-  const HomeScreen({super.key, required this.username});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -67,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
               child: Container(
                 color: const Color(0xFFF5EBDD).withOpacity(0.55),
               ),
@@ -78,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
               index: _currentIndex,
               children: [
                 _buildHomeContent(),
-                 ProductsScreen(),
+                ProductsScreen(),
                 const SchemesScreen(),
                 RatesScreen(),
                 const ProfileScreen(),
@@ -95,7 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return FutureBuilder<List<EnrolledScheme>>(
       future: _schemesFuture,
       builder: (context, snapshot) {
-
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -106,39 +106,48 @@ class _HomeScreenState extends State<HomeScreen> {
 
         final schemes = snapshot.data ?? [];
 
-        int totalSaved =
-        schemes.fold(0, (sum, s) => sum + s.amountPaid);
-
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               const SizedBox(height: 28),
 
               Row(
                 children: [
-                  Image.asset("assets/images/suvarna_logo.png", height: 52),
+                  Image.asset(
+                    "assets/images/suvarna_logo.png",
+                    height: 52,
+                  ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "Welcome, ${widget.username}",
+                          "Welcome",
                           style: GoogleFonts.playfairDisplay(
-                            fontSize: 24,
+                            fontSize: 32,
                             fontWeight: FontWeight.w700,
-                            color: const Color(0xFF3B2A1F),
+                            color: const Color(0xFF2E2118),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         Text(
-                          "Build your golden future with Suvarna Jewellers",
-                          style: GoogleFonts.poppins(
+                          "Your scheme control room",
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 17,
+                            fontStyle: FontStyle.italic,
+                            color: const Color(0xFF7A6A58),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "\"Every gram you save today becomes tomorrow's celebration.\"",
+                          style: GoogleFonts.playfairDisplay(
                             fontSize: 13,
-                            color: const Color(0xFF6E665A),
+                            fontStyle: FontStyle.italic,
+                            color: const Color(0xFFB48A2C),
                           ),
                         ),
                       ],
@@ -147,41 +156,56 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
 
-              const SizedBox(height: 28),
-
-              _buildTotalSavingsCard(totalSaved),
-
               const SizedBox(height: 36),
 
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "My Schemes",
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF3B2A1F),
+                  const Expanded(
+                    child: Divider(
+                      color: Color(0xFFD4AF37),
+                      thickness: 0.4,
                     ),
                   ),
-                  Text(
-                    "${schemes.length} active",
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: const Color(0xFF6E665A),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      "✨ Your Active Schemes ✨",
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                        color: const Color(0xFFB48A2C),
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Divider(
+                      color: Color(0xFFD4AF37),
+                      thickness: 0.4,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 6),
+              const SizedBox(height: 36),
 
-              Text(
-                "Tap any scheme to view details",
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: const Color(0xFF8C8578),
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Your Schemes",
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF2E2118),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 80,
+                    height: 2,
+                    color: const Color(0xFFD4AF37),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 20),
@@ -192,8 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Center(child: Text("No schemes enrolled yet")),
                 )
               else
-                ...schemes.map((scheme) =>
-                    _buildSchemeCard(scheme)),
+                ...schemes.map((scheme) => _buildSchemeCard(scheme)),
 
               const SizedBox(height: 120),
             ],
@@ -203,184 +226,35 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTotalSavingsCard(int totalSaved) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-
-          /// Top Gold Line
-          Container(
-            height: 4,
-            decoration: const BoxDecoration(
-              color: Color(0xFFD4AF37),
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(26),
-              ),
-            ),
-          ),
-
-          /// Main Card
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6F0E4).withOpacity(0.98),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(26),
-              ),
-              border: Border.all(
-                color: const Color(0xFFD4AF37),
-                width: 0.8,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                /// Label + Icon
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "TOTAL SAVINGS",
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        letterSpacing: 1.5,
-                        color: const Color(0xFF7A7267),
-                      ),
-                    ),
-                    Container(
-                      height: 44,
-                      width: 44,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE9DFCF),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.card_giftcard,
-                        color: Color(0xFFD4AF37),
-                        size: 20,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 8),
-
-                /// Amount
-                Text(
-                  "₹${totalSaved.toString().replaceAllMapped(
-                    RegExp(r'\B(?=(\d{3})+(?!\d))'),
-                        (match) => ',',
-                  )}",
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFB48A2C),
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                /// Pills
-                Row(
-                  children: [
-                    _pricePill(
-                      icon: Icons.diamond_outlined,
-                      label: "Gold 22K",
-                      value: "₹6,850/g",
-                    ),
-                    const SizedBox(width: 10),
-                    _pricePill(
-                      icon: Icons.trending_up,
-                      label: "Silver",
-                      value: "₹92/g",
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _pricePill({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1E8DA),
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 14, color: const Color(0xFFD4AF37)),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              color: const Color(0xFF7A7267),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFFB48A2C),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   Widget _buildSchemeCard(EnrolledScheme scheme) {
     double progress = scheme.monthsPaid / scheme.totalMonths;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 22),
       child: InkWell(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(22),
         onTap: () => _openSchemeDetails(scheme),
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: const Color(0xFFF6F0E4).withOpacity(0.97),
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: const Color(0xFFD4AF37),
-              width: 1,
+              width: 0.6,
             ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                blurRadius: 10,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
@@ -394,8 +268,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const Icon(
                     Icons.chevron_right,
+                    size: 18,
                     color: Color(0xFFD4AF37),
-                  )
+                  ),
                 ],
               ),
 
@@ -404,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 children: [
                   Text(
-                    "${scheme.monthsPaid}/${scheme.totalMonths} months",
+                    "${scheme.monthsPaid}/${scheme.totalMonths} paid",
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       color: const Color(0xFF6E665A),
@@ -412,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    "₹${scheme.amountPaid} paid",
+                    "₹${scheme.amountPaid}",
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -468,8 +343,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _detailItem("Total Scheme Amount", "₹${scheme.totalAmount}"),
           _detailItem("Amount Paid", "₹${scheme.amountPaid}"),
           _detailItem("Balance Amount", "₹${scheme.amountBalance}"),
-          _detailItem("Months Completed",
-              "${scheme.monthsPaid} of ${scheme.totalMonths}"),
+          _detailItem(
+            "Months Completed",
+            "${scheme.monthsPaid} of ${scheme.totalMonths}",
+          ),
           _detailItem("Last Payment Date", scheme.lastPaymentDate),
           _detailItem("Next Due Date", scheme.nextDueDate),
           const SizedBox(height: 24),
@@ -531,19 +408,6 @@ class _HomeScreenState extends State<HomeScreen> {
         BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: "Rates"),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
       ],
-    );
-  }
-
-  Widget _placeholder(String title) {
-    return Center(child: Text("$title Page"));
-  }
-
-  Widget _buildProfile() {
-    return Center(
-      child: ElevatedButton(
-        onPressed: _onLogout,
-        child: const Text("Logout"),
-      ),
     );
   }
 }

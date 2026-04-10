@@ -1,48 +1,21 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'scheme_model.dart';
 
 class SchemeService {
-
   static Future<List<SchemeModel>> getSchemes() async {
+    final response = await http.get(
+      Uri.parse('https://suvarnagold-16e5.vercel.app/api/schemes/all'),
+    );
 
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 800));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-    return const [
+      final List schemes = data['schemes'];
 
-      SchemeModel(
-        title: "Suvarna Gold Savings",
-        duration: "11 Months",
-        minAmount: "₹1,000/mo",
-        benefits: [
-          "Bonus gold on maturity",
-          "Flexible monthly amount",
-          "No making charges on select items",
-        ],
-      ),
-
-      SchemeModel(
-        title: "Suvarna Diamond Plan",
-        duration: "18 Months",
-        minAmount: "₹2,500/mo",
-        benefits: [
-          "5% bonus on maturity",
-          "Priority access to new collections",
-          "Free hallmarking",
-        ],
-      ),
-
-      SchemeModel(
-        title: "Suvarna Heritage Plan",
-        duration: "24 Months",
-        minAmount: "₹5,000/mo",
-        benefits: [
-          "8% bonus on maturity",
-          "Exclusive heritage designs",
-          "Free insurance cover",
-          "Personal jewellery advisor",
-        ],
-      ),
-
-    ];
+      return schemes.map((e) => SchemeModel.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load schemes');
+    }
   }
 }

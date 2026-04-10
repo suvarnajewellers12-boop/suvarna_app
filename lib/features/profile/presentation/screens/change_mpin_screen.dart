@@ -41,22 +41,27 @@ class _ChangeMPINScreenState extends State<ChangeMPINScreen> {
 
     if (user == null) return;
 
-    if (current.text != user!["mpin"]) {
+    /// FIXED COMPARISON
+    final storedPin = user!["mpin"].toString().trim();
+    final enteredPin = current.text.trim();
+
+    if (enteredPin != storedPin) {
       showError("Current MPIN is incorrect");
       return;
     }
 
-    if (newPin.text.length != 4) {
+    if (newPin.text.trim().length != 4) {
       showError("MPIN must be 4 digits");
       return;
     }
 
-    if (newPin.text != confirm.text) {
+    if (newPin.text.trim() != confirm.text.trim()) {
       showError("New MPIN does not match");
       return;
     }
 
-    user!["mpin"] = newPin.text;
+    /// UPDATE MPIN
+    user!["mpin"] = newPin.text.trim();
 
     await LocalAuthDatabase.updateUser(user!);
 

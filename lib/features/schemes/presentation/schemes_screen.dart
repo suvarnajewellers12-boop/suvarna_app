@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:suvarna_jewellers/features/schemes/data/scheme_model.dart';
 import 'package:suvarna_jewellers/features/schemes/data/scheme_service.dart';
 import 'package:suvarna_jewellers/features/schemes/presentation/widgets/scheme_card.dart';
 import 'contact_screen.dart';

@@ -1,163 +1,191 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../../core/session_manager.dart';
 import 'auth_models.dart';
-import 'local_auth_database.dart';
 
 class AuthService {
+  static const String baseUrl =
+      "https://suvarna-jewellers-customer-backend.vercel.app/api/auth";
 
-  /// =========================
-  /// REGISTER
-  /// =========================
+  static Future<AuthResponse> sendSignupOtp({
+    required String mobile,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/send-otp"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": mobile,
+        }),
+      ).timeout(const Duration(seconds: 20));
+      print("STATUS CODE: ${response.statusCode}");
+      print("BODY: ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "OTP send failed",
+      );
+    } catch (e) {
+      return AuthResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<AuthResponse> verifySignupOtp({
+    required String mobile,
+    required String otp,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/verify-otp"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": mobile,
+          "otp": otp,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "Invalid OTP",
+      );
+    } catch (e) {
+      return AuthResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
   static Future<AuthResponse> register({
-    required String username,
     required String fullName,
     required String mobile,
     required String password,
   }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/signup"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "name": fullName,
+          "phone": mobile,
+          "password": password,
+        }),
+      );
 
-    if (password.length < 6) {
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 201) {
+        final token = data["token"];
+
+        if (token != null) {
+          await SessionManager.saveToken(token);
+          await SessionManager.saveLoginSession(mobile);
+        }
+
+        return AuthResponse(
+          success: true,
+          username: mobile,
+        );
+      }
+
       return AuthResponse(
         success: false,
-        message: "Password must be at least 6 characters",
+        message: data["message"] ?? "Signup failed",
       );
-    }
-
-    final existingUser =
-    await LocalAuthDatabase.findByUsername(username);
-
-    if (existingUser != null) {
+    } catch (e) {
       return AuthResponse(
         success: false,
-        message: "Username already exists",
+        message: e.toString(),
       );
     }
-
-    final existingMobile =
-    await LocalAuthDatabase.findByMobile(mobile);
-
-    if (existingMobile != null) {
-      return AuthResponse(
-        success: false,
-        message: "Mobile already registered",
-      );
-    }
-
-    await LocalAuthDatabase.addUser({
-      "username": username,
-      "fullName": fullName,
-      "mobile": mobile,
-      "password": password,
-      "mpin": null,
-    });
-
-    return AuthResponse(
-      success: true,
-      username: username,
-    );
   }
 
-  /// =========================
-  /// VERIFY SIGNUP OTP
-  /// =========================
-  static Future<AuthResponse> verifySignupOtp({
-    required String otp,
-  }) async {
-
-    if (otp != "123456") {
-      return AuthResponse(
-        success: false,
-        message: "Invalid OTP",
-      );
-    }
-
-    return AuthResponse(success: true);
-  }
-
-  /// =========================
-  /// SET MPIN
-  /// =========================
-  static Future<AuthResponse> setMpin({
-    required String username,
-    required String mpin,
-  }) async {
-
-    final user =
-    await LocalAuthDatabase.findByUsername(username);
-
-    if (user == null) {
-      return AuthResponse(
-        success: false,
-        message: "User not found",
-      );
-    }
-
-    user["mpin"] = mpin;
-    await LocalAuthDatabase.updateUser(user);
-
-    return AuthResponse(success: true);
-  }
-
-  /// =========================
-  /// LOGIN
-  /// =========================
   static Future<AuthResponse> login({
     required String identifier,
     required String password,
   }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/login"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": identifier,
+          "password": password,
+        }),
+      );
 
-    Map<String, dynamic>? user =
-    await LocalAuthDatabase.findByUsername(identifier);
+      final data = jsonDecode(response.body);
 
-    user ??=
-    await LocalAuthDatabase.findByMobile(identifier);
+      if (response.statusCode == 200) {
+        final token = data["token"];
 
-    if (user == null) {
+        if (token != null) {
+          await SessionManager.saveToken(token);
+          await SessionManager.saveLoginSession(identifier);
+        }
+
+        return AuthResponse(
+          success: true,
+          username: identifier,
+        );
+      }
+
       return AuthResponse(
         success: false,
-        message: "User not found",
+        message: data["message"] ?? "Login failed",
       );
-    }
-
-    if (user["password"] != password) {
+    } catch (e) {
       return AuthResponse(
         success: false,
-        message: "Incorrect password",
+        message: e.toString(),
       );
     }
-
-    return AuthResponse(
-      success: true,
-      username: user["username"],
-    );
   }
 
-  /// =========================
-  /// VERIFY LOGIN OTP
-  /// =========================
-  static Future<AuthResponse> verifyLoginOtp({
-    required String otp,
+  static Future<AuthResponse> setMpin({
+    required String username,
+    required String mpin,
   }) async {
-
-    if (otp != "123456") {
-      return AuthResponse(
-        success: false,
-        message: "Invalid OTP",
-      );
-    }
-
+    await SessionManager.saveMpin(username, mpin);
     return AuthResponse(success: true);
   }
 
-  /// =========================
-  /// VERIFY MPIN
-  /// =========================
+  static Future<AuthResponse> verifyLoginOtp({
+    required String otp,
+  }) async {
+    return AuthResponse(success: true);
+  }
+
   static Future<AuthResponse> verifyMpin({
     required String username,
     required String mpin,
   }) async {
+    final savedMpin = await SessionManager.getMpin(username);
 
-    final user =
-    await LocalAuthDatabase.findByUsername(username);
-
-    if (user == null || user["mpin"] != mpin) {
+    if (savedMpin != mpin) {
       return AuthResponse(
         success: false,
         message: "Incorrect MPIN",

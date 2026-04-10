@@ -1,7 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:suvarna_jewellers/core/session_manager.dart';
-import 'package:suvarna_jewellers/features/auth/data/local_auth_database.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/change_mpin_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/notifications_screen.dart';
@@ -22,7 +21,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
 
-  Map<String, dynamic>? user;
+  String? mobile;
 
   @override
   void initState() {
@@ -31,15 +30,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-
-    final username = await SessionManager.getUsername();
-
-    if (username == null) return;
-
-    final dbUser = await LocalAuthDatabase.findByUsername(username);
+    final savedMobile = await SessionManager.getUsername();
 
     setState(() {
-      user = dbUser;
+      mobile = savedMobile;
     });
   }
 
@@ -56,7 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
 
-    if (user == null) {
+    if (mobile == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -134,22 +128,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-
-                            Text(
-                              user?["fullName"] ?? "",
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold),
+                            const Text(
+                              "Customer",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-
-                            Text("@${user?["username"] ?? ""}"),
-
                             Text(
-                              "+91 ${user?["mobile"] ?? ""}",
+                              "+91 $mobile",
                               style: const TextStyle(fontSize: 12),
                             ),
-
                           ],
-                        )
+                        ),
                       ],
                     ),
                   ),
