@@ -28,8 +28,7 @@ class _MPinScreenState extends State<MPinScreen> {
   bool _isConfirmStep = false;
   String? _error;
 
-  String get _currentValue =>
-      _isConfirmStep ? _confirmMpin : _mpin;
+  String get _currentValue => _isConfirmStep ? _confirmMpin : _mpin;
 
   void _handleDigit(String digit) {
     if (_currentValue.length >= maxLength) return;
@@ -56,8 +55,7 @@ class _MPinScreenState extends State<MPinScreen> {
       _error = null;
 
       if (_isConfirmStep && _confirmMpin.isNotEmpty) {
-        _confirmMpin =
-            _confirmMpin.substring(0, _confirmMpin.length - 1);
+        _confirmMpin = _confirmMpin.substring(0, _confirmMpin.length - 1);
       } else if (!_isConfirmStep && _mpin.isNotEmpty) {
         _mpin = _mpin.substring(0, _mpin.length - 1);
       }
@@ -90,24 +88,15 @@ class _MPinScreenState extends State<MPinScreen> {
   }
 
   void _onComplete(String mpin) async {
-
-    // ================= SETUP MODE =================
     if (widget.mode == MPinMode.setup) {
+      final result = await AuthService.setMpin(
+        username: widget.username,
+        mpin: mpin,
+      );
 
-      await SessionManager.saveMpin(widget.username, mpin);
-
-      // Save login session
-      await SessionManager.saveLoginSession(widget.username);
-    }
-
-    // ================= VERIFY MODE =================
-    if (widget.mode == MPinMode.verify) {
-
-      final savedMpin = await SessionManager.getMpin(widget.username);
-
-      if (savedMpin == null || savedMpin != mpin) {
+      if (!result.success) {
         setState(() {
-          _error = "Incorrect MPIN";
+          _error = result.message ?? "Failed to save MPIN";
           _mpin = '';
           _confirmMpin = '';
           _isConfirmStep = false;
@@ -115,7 +104,25 @@ class _MPinScreenState extends State<MPinScreen> {
         return;
       }
 
-      // Ensure session remains active
+      await SessionManager.saveLoginSession(widget.username);
+    }
+
+    if (widget.mode == MPinMode.verify) {
+      final result = await AuthService.verifyMpin(
+        username: widget.username,
+        mpin: mpin,
+      );
+
+      if (!result.success) {
+        setState(() {
+          _error = result.message ?? "Incorrect MPIN";
+          _mpin = '';
+          _confirmMpin = '';
+          _isConfirmStep = false;
+        });
+        return;
+      }
+
       await SessionManager.saveLoginSession(widget.username);
     }
 
@@ -133,151 +140,160 @@ class _MPinScreenState extends State<MPinScreen> {
     final isSetup = widget.mode == MPinMode.setup;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFFF8F3E8),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-
-            /// Logo
-            Image.asset(
-              "assets/images/suvarna_logo.png",
-              height: 70,
+        child: SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height,
             ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
 
-            const SizedBox(height: 24),
+                  Image.asset(
+                    "assets/images/suvarna_logo.png",
+                    height: 70,
+                  ),
 
-            /// Lock Icon
-            Container(
-              height: 48,
-              width: 48,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE9DFCF),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.lock_outline,
-                color: Color(0xFFB48A2C),
-                size: 22,
-              ),
-            ),
+                  const SizedBox(height: 24),
 
-            const SizedBox(height: 20),
-
-            /// Title
-            Text(
-              isSetup
-                  ? (_isConfirmStep
-                  ? "Confirm MPIN"
-                  : "Create MPIN")
-                  : "Enter MPIN",
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF3B2A1F),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            /// Subtitle
-            Text(
-              isSetup
-                  ? (_isConfirmStep
-                  ? "Re-enter your MPIN to confirm"
-                  : "Set a 4-digit MPIN for quick access")
-                  : "Enter your 4-digit MPIN to continue",
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: const Color(0xFFA79E91),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            /// Dots
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                maxLength,
-                    (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  margin:
-                  const EdgeInsets.symmetric(horizontal: 6),
-                  height: 14,
-                  width: 14,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: index < _currentValue.length
-                        ? const Color(0xFFD4AF37)
-                        : Colors.transparent,
-                    border: Border.all(
-                      color: const Color(0xFFD4AF37),
-                      width: 2,
+                  Container(
+                    height: 48,
+                    width: 48,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE9DFCF),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.lock_outline,
+                      color: Color(0xFFB48A2C),
+                      size: 22,
                     ),
                   ),
-                ),
+
+                  const SizedBox(height: 20),
+
+                  Text(
+                    isSetup
+                        ? (_isConfirmStep ? "Confirm MPIN" : "Create MPIN")
+                        : "Enter MPIN",
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF3B2A1F),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Text(
+                    isSetup
+                        ? (_isConfirmStep
+                        ? "Re-enter your MPIN to confirm"
+                        : "Set a 4-digit MPIN for quick access")
+                        : "Enter your 4-digit MPIN to continue",
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: const Color(0xFFA79E91),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      maxLength,
+                          (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                        height: 14,
+                        width: 14,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: index < _currentValue.length
+                              ? const Color(0xFFD4AF37)
+                              : Colors.transparent,
+                          border: Border.all(
+                            color: const Color(0xFFD4AF37),
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  if (_error != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      _error!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 40),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: 12,
+                      gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 1.2,
+                      ),
+                      itemBuilder: (context, index) {
+                        final keys = [
+                          '1',
+                          '2',
+                          '3',
+                          '4',
+                          '5',
+                          '6',
+                          '7',
+                          '8',
+                          '9',
+                          '',
+                          '0',
+                          'del'
+                        ];
+
+                        final key = keys[index];
+
+                        if (key.isEmpty) return const SizedBox();
+
+                        if (key == 'del') {
+                          return _buildKey(
+                            icon: Icons.backspace_outlined,
+                            onTap: _handleDelete,
+                            isDelete: true,
+                          );
+                        }
+
+                        return _buildKey(
+                          label: key,
+                          onTap: () => _handleDigit(key),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
-
-            if (_error != null) ...[
-              const SizedBox(height: 16),
-              Text(
-                _error!,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.redAccent,
-                ),
-              ),
-            ],
-
-            const Spacer(),
-
-            /// Keypad
-            Padding(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 40),
-              child: GridView.builder(
-                shrinkWrap: true,
-                physics:
-                const NeverScrollableScrollPhysics(),
-                itemCount: 12,
-                gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                ),
-                itemBuilder: (context, index) {
-                  final keys = [
-                    '1','2','3',
-                    '4','5','6',
-                    '7','8','9',
-                    '','0','del'
-                  ];
-
-                  final key = keys[index];
-
-                  if (key.isEmpty) return const SizedBox();
-
-                  if (key == 'del') {
-                    return _buildKey(
-                      icon: Icons.backspace_outlined,
-                      onTap: _handleDelete,
-                      isDelete: true,
-                    );
-                  }
-
-                  return _buildKey(
-                    label: key,
-                    onTap: () => _handleDigit(key),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 40),
-          ],
+          ),
         ),
       ),
     );
@@ -300,7 +316,7 @@ class _MPinScreenState extends State<MPinScreen> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 6,
               offset: const Offset(0, 3),
             ),
@@ -308,15 +324,16 @@ class _MPinScreenState extends State<MPinScreen> {
         ),
         child: Center(
           child: icon != null
-              ? Icon(icon,
-              color: const Color(0xFF6E665A))
+              ? Icon(
+            icon,
+            color: const Color(0xFF6E665A),
+          )
               : Text(
             label!,
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color:
-              const Color(0xFF3B2A1F),
+              color: const Color(0xFF3B2A1F),
             ),
           ),
         ),

@@ -20,6 +20,7 @@ class AuthService {
           "phone": mobile,
         }),
       ).timeout(const Duration(seconds: 20));
+
       print("STATUS CODE: ${response.statusCode}");
       print("BODY: ${response.body}");
 
@@ -169,8 +170,35 @@ class AuthService {
     required String username,
     required String mpin,
   }) async {
-    await SessionManager.saveMpin(username, mpin);
-    return AuthResponse(success: true);
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/set-mpin"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": username,
+          "mpin": mpin,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await SessionManager.saveMpin(username, mpin);
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "MPIN save failed",
+      );
+    } catch (e) {
+      return AuthResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
   }
 
   static Future<AuthResponse> verifyLoginOtp({
@@ -183,15 +211,33 @@ class AuthService {
     required String username,
     required String mpin,
   }) async {
-    final savedMpin = await SessionManager.getMpin(username);
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/verify-mpin"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": username,
+          "mpin": mpin,
+        }),
+      );
 
-    if (savedMpin != mpin) {
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AuthResponse(success: true);
+      }
+
       return AuthResponse(
         success: false,
-        message: "Incorrect MPIN",
+        message: data["message"] ?? "Incorrect MPIN",
+      );
+    } catch (e) {
+      return AuthResponse(
+        success: false,
+        message: e.toString(),
       );
     }
-
-    return AuthResponse(success: true);
   }
 }
