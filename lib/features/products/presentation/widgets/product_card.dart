@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/product_model.dart';
+import 'dart:convert';
 
 class ProductCard extends StatelessWidget {
 
@@ -34,8 +35,8 @@ class ProductCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                child: Image.asset(
-                  product.image,
+                child: Image.memory(
+                  base64Decode(product.image.split(',').last),
                   height: 130,
                   width: double.infinity,
                   fit: BoxFit.cover,

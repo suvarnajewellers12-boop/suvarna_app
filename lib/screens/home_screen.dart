@@ -366,9 +366,9 @@ class _HomeScreenState extends State<HomeScreen> {
           _detailItem("Next Due Date", scheme.nextDueDate),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () {
-              print("PAY BUTTON SCHEME ID: ${scheme.schemeId}");
-              print("PAY BUTTON CUSTOMER ID: ${scheme.id}");
+            onPressed: scheme.monthsPaid >= scheme.totalMonths
+                ? null
+                : () {
               Navigator.pop(context);
 
               PaymentService.startPayment(
@@ -381,15 +381,23 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFD4AF37),
+              backgroundColor: scheme.monthsPaid >= scheme.totalMonths
+                  ? Colors.grey.shade400
+                  : const Color(0xFFD4AF37),
+              disabledBackgroundColor: Colors.grey.shade400,
               minimumSize: const Size(double.infinity, 52),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
             ),
             child: Text(
-              "Pay Now — ₹${(scheme.totalAmount / scheme.totalMonths).round()}/month",
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              scheme.monthsPaid >= scheme.totalMonths
+                  ? "Completed"
+                  : "Pay Now — ₹${(scheme.totalAmount / scheme.totalMonths).round()}/month",
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 16),

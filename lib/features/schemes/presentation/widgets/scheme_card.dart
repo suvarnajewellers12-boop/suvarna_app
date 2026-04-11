@@ -138,7 +138,7 @@ class SchemeCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        isEnrolled ? "Enrolled" : "Enroll Now",
+                        isEnrolled ? "Already Enrolled" : "Enroll Now",
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,

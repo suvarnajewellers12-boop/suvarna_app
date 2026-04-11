@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/product_service.dart';
 import '../models/product_model.dart';
 import 'widgets/product_card.dart';
+import 'dart:convert';
 
 class ProductsScreen extends StatefulWidget {
 
@@ -17,17 +18,10 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
 
   String metalTab = "gold";
-  String activeCategory = "All";
 
   List<Product> products = [];
 
-  final goldCategories = [
-    "All","Rings","Chains","Bangles","Anklets","Necklaces","Earrings"
-  ];
 
-  final silverCategories = [
-    "All","Rings","Chains","Bangles","Anklets","Necklaces","Earrings","Silver Idols"
-  ];
 
   @override
   void initState() {
@@ -45,16 +39,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
   }
 
   List<Product> get filteredProducts {
-
     return products.where((p) {
-
-      final metalMatch = p.metal == metalTab;
-
-      final categoryMatch =
-          activeCategory == "All" || p.category == activeCategory;
-
-      return metalMatch && categoryMatch;
-
+      return p.metalType.toLowerCase() == metalTab;
     }).toList();
   }
 
@@ -77,9 +63,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-    final categories =
-    metalTab == "gold" ? goldCategories : silverCategories;
 
     return Stack(
       children: [
@@ -128,54 +111,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
                 ],
               ),
 
-              const SizedBox(height: 16),
-
-              SizedBox(
-                height: 34,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  children: categories.map((cat){
-
-                    final selected = activeCategory == cat;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: GestureDetector(
-                        onTap: (){
-                          setState(() {
-                            activeCategory = cat;
-                          });
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal:16),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? const Color(0xFFD4AF37)
-                                : const Color(0xFFF6F0E4),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: const Color(0xFFD4AF37),
-                            ),
-                          ),
-                          child: Text(
-                            cat,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: selected
-                                  ? Colors.white
-                                  : const Color(0xFF7A7267),
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-
-                  }).toList(),
-                ),
-              ),
 
               const SizedBox(height: 10),
 
@@ -229,7 +164,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
       onTap: (){
         setState(() {
           metalTab = metal;
-          activeCategory = "All";
+
         });
       },
 
@@ -265,18 +200,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
-  Widget _productDetails(Product product){
-
+  Widget _productDetails(Product product) {
     return Padding(
-
       padding: const EdgeInsets.all(22),
-
       child: Column(
-
         mainAxisSize: MainAxisSize.min,
-
         children: [
-
           Container(
             width: 40,
             height: 4,
@@ -300,26 +229,29 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.asset(
-              product.image,
-              height: 180,
+            child: Image.memory(
+              base64Decode(product.image.split(',').last),
+              height: 220,
               fit: BoxFit.cover,
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
           Text(
             product.description,
-            style: GoogleFonts.poppins(fontSize: 13),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: const Color(0xFF5E5548),
+            ),
           ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
 
-          _detail("Purity", product.purity),
-          _detail("Weight", product.weight),
-          _detail("Making", product.making),
-          _detail("Hallmark", product.hallmark ? "BIS Certified" : "N/A"),
+          _detail("Metal", product.metalType),
+          _detail("Purity", product.carats),
+          _detail("Weight", "${product.weight} g"),
 
           const SizedBox(height: 18),
         ],

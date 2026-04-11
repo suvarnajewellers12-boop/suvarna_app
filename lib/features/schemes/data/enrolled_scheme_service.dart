@@ -79,7 +79,9 @@ class EnrolledSchemeService {
         )
             : null;
 
-        final formattedNextDate = nextDate != null
+        final formattedNextDate = installmentsPaid >= durationMonths
+            ? "Completed"
+            : nextDate != null
             ? "${nextDate.day.toString().padLeft(2, '0')}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.year}"
             : "";
 

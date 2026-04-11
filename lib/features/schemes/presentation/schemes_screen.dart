@@ -136,18 +136,15 @@ class _SchemesScreenState extends State<SchemesScreen> {
                             child: SchemeCard(
                               scheme: scheme,
                               isEnrolled: isEnrolled,
-                              onEnroll: () async {
+                              onEnroll: () {
                                 PaymentService.startPayment(
                                   context: context,
                                   schemeId: scheme.id,
                                   amount: scheme.monthlyAmount,
+                                  onSuccess: () {
+                                    _refreshData();
+                                  },
                                 );
-
-                                await Future.delayed(
-                                  const Duration(seconds: 2),
-                                );
-
-                                _refreshData();
                               },
                             ),
                           );
