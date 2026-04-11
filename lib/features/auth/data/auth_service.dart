@@ -98,10 +98,19 @@ class AuthService {
 
       if (response.statusCode == 201) {
         final token = data["token"];
+        final user = data["user"];
 
         if (token != null) {
           await SessionManager.saveToken(token);
           await SessionManager.saveLoginSession(mobile);
+
+          if (data["user"] != null && data["user"]["id"] != null) {
+            await SessionManager.saveUserId(data["user"]["id"].toString());
+          }
+        }
+
+        if (user != null && user["id"] != null) {
+          await SessionManager.saveUserId(user["id"].toString());
         }
 
         return AuthResponse(
@@ -109,7 +118,6 @@ class AuthService {
           username: mobile,
         );
       }
-
       return AuthResponse(
         success: false,
         message: data["message"] ?? "Signup failed",
@@ -142,10 +150,19 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final token = data["token"];
+        final user = data["user"];
 
         if (token != null) {
           await SessionManager.saveToken(token);
           await SessionManager.saveLoginSession(identifier);
+
+          if (data["user"] != null && data["user"]["id"] != null) {
+            await SessionManager.saveUserId(data["user"]["id"].toString());
+          }
+        }
+
+        if (user != null && user["id"] != null) {
+          await SessionManager.saveUserId(user["id"].toString());
         }
 
         return AuthResponse(

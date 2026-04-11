@@ -4,18 +4,34 @@ import 'scheme_model.dart';
 
 class SchemeService {
   static Future<List<SchemeModel>> getSchemes() async {
-    final response = await http.get(
-      Uri.parse('https://suvarnagold-16e5.vercel.app/api/schemes/all'),
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://suvarnagold-16e5.vercel.app/api/schemes/all',
+        ),
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      print("STATUS CODE: ${response.statusCode}");
+      print("RAW BODY: ${response.body}");
 
-      final List schemes = data['schemes'];
+      if (response.statusCode != 200) {
+        return [];
+      }
 
-      return schemes.map((e) => SchemeModel.fromJson(e)).toList();
-    } else {
-      throw Exception('Failed to load schemes');
+      final decoded = jsonDecode(response.body);
+
+      if (decoded == null || decoded["schemes"] == null) {
+        return [];
+      }
+
+      final List schemes = decoded["schemes"];
+
+      return schemes.map((item) {
+        return SchemeModel.fromJson(item);
+      }).toList();
+    } catch (e) {
+      print("SCHEME FETCH ERROR: $e");
+      return [];
     }
   }
 }

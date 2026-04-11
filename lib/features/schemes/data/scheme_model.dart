@@ -15,11 +15,11 @@ class SchemeModel {
 
   factory SchemeModel.fromJson(Map<String, dynamic> json) {
     return SchemeModel(
-      id: json['id'].toString(),
-      name: json['name'],
-      monthlyAmount: json['monthlyAmount'],
-      durationMonths: json['durationMonths'],
-      maturityAmount: json['maturityAmount'],
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unnamed Scheme',
+      monthlyAmount: int.tryParse(json['monthlyAmount'].toString()) ?? 0,
+      durationMonths: int.tryParse(json['durationMonths'].toString()) ?? 0,
+      maturityAmount: int.tryParse(json['maturityAmount'].toString()) ?? 0,
     );
   }
 }

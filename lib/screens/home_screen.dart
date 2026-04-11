@@ -12,6 +12,7 @@ import 'package:suvarna_jewellers/features/schemes/presentation/schemes_screen.d
 import 'package:suvarna_jewellers/features/products/presentation/products_screen.dart';
 import 'package:suvarna_jewellers/features/rates/presentation/rates_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/profile_screen.dart';
+import 'package:suvarna_jewellers/features/schemes/data/payment_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,14 +24,26 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  late Future<List<EnrolledScheme>> _schemesFuture;
+  Future<List<EnrolledScheme>>? _schemesFuture;
 
   List<String> paymentDone = [];
 
   @override
   void initState() {
     super.initState();
-    _schemesFuture = EnrolledSchemeService.getUserSchemes();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 1200));
+      refreshSchemes();
+    });
+  }
+
+  void refreshSchemes() {
+    if (!mounted) return;
+
+    setState(() {
+      _schemesFuture = EnrolledSchemeService.getUserSchemes();
+    });
   }
 
   void _onLogout() async {
@@ -104,122 +117,128 @@ class _HomeScreenState extends State<HomeScreen> {
           return const Center(child: Text("Something went wrong"));
         }
 
-        final schemes = snapshot.data ?? [];
+        final List<EnrolledScheme> schemes = snapshot.data ?? [];
+        print("HOME SCHEMES COUNT: ${schemes.length}");
+        return RefreshIndicator(
+          onRefresh: () async {
+            refreshSchemes();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 28),
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 28),
-
-              Row(
-                children: [
-                  Image.asset(
-                    "assets/images/suvarna_logo.png",
-                    height: 52,
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Welcome",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF2E2118),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Your scheme control room",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 17,
-                            fontStyle: FontStyle.italic,
-                            color: const Color(0xFF7A6A58),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "\"Every gram you save today becomes tomorrow's celebration.\"",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 13,
-                            fontStyle: FontStyle.italic,
-                            color: const Color(0xFFB48A2C),
-                          ),
-                        ),
-                      ],
+                Row(
+                  children: [
+                    Image.asset(
+                      "assets/images/suvarna_logo.png",
+                      height: 52,
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 36),
-
-              Row(
-                children: [
-                  const Expanded(
-                    child: Divider(
-                      color: Color(0xFFD4AF37),
-                      thickness: 0.4,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Text(
-                      "✨ Your Active Schemes ✨",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 13,
-                        fontStyle: FontStyle.italic,
-                        color: const Color(0xFFB48A2C),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Welcome",
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF2E2118),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "Your scheme control room",
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 17,
+                              fontStyle: FontStyle.italic,
+                              color: const Color(0xFF7A6A58),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "\"Every gram you save today becomes tomorrow's celebration.\"",
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 13,
+                              fontStyle: FontStyle.italic,
+                              color: const Color(0xFFB48A2C),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                  const Expanded(
-                    child: Divider(
-                      color: Color(0xFFD4AF37),
-                      thickness: 0.4,
+                  ],
+                ),
+
+                const SizedBox(height: 36),
+
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Divider(
+                        color: Color(0xFFD4AF37),
+                        thickness: 0.4,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 36),
-
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Your Schemes",
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2E2118),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        "✨ Your Active Schemes ✨",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: const Color(0xFFB48A2C),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    width: 80,
-                    height: 2,
-                    color: const Color(0xFFD4AF37),
-                  ),
-                ],
-              ),
+                    const Expanded(
+                      child: Divider(
+                        color: Color(0xFFD4AF37),
+                        thickness: 0.4,
+                      ),
+                    ),
+                  ],
+                ),
 
-              const SizedBox(height: 20),
+                const SizedBox(height: 36),
 
-              if (schemes.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: 40),
-                  child: Center(child: Text("No schemes enrolled yet")),
-                )
-              else
-                ...schemes.map((scheme) => _buildSchemeCard(scheme)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Your Schemes",
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF2E2118),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      width: 80,
+                      height: 2,
+                      color: const Color(0xFFD4AF37),
+                    ),
+                  ],
+                ),
 
-              const SizedBox(height: 120),
-            ],
+                const SizedBox(height: 20),
+
+                if (schemes.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 40),
+                    child: Center(child: Text("No schemes enrolled yet")),
+                  )
+                else
+                  ...schemes.map((scheme) => _buildSchemeCard(scheme)),
+
+                const SizedBox(height: 120),
+              ],
+            ),
           ),
         );
       },
@@ -273,9 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 8),
-
               Row(
                 children: [
                   Text(
@@ -296,9 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 14),
-
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: LinearProgressIndicator(
@@ -352,10 +367,18 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () {
-              setState(() {
-                paymentDone.add(scheme.id);
-              });
+              print("PAY BUTTON SCHEME ID: ${scheme.schemeId}");
+              print("PAY BUTTON CUSTOMER ID: ${scheme.id}");
               Navigator.pop(context);
+
+              PaymentService.startPayment(
+                context: context,
+                schemeId: scheme.schemeId,
+                amount: (scheme.totalAmount / scheme.totalMonths).round(),
+                onSuccess: () {
+                  refreshSchemes();
+                },
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD4AF37),
@@ -397,7 +420,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBottomNav() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
-      onTap: (i) => setState(() => _currentIndex = i),
+      onTap: (i) {
+        setState(() {
+          _currentIndex = i;
+          if (i == 0) {
+            refreshSchemes();
+          }
+        });
+      },
       selectedItemColor: const Color(0xFFD4AF37),
       unselectedItemColor: const Color(0xFF7A7267),
       type: BottomNavigationBarType.fixed,

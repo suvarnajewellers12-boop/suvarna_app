@@ -1,5 +1,6 @@
 class EnrolledScheme {
   final String id;
+  final String schemeId;
   final String name;
   final int totalAmount;
   final int amountPaid;
@@ -11,6 +12,7 @@ class EnrolledScheme {
 
   EnrolledScheme({
     required this.id,
+    required this.schemeId,
     required this.name,
     required this.totalAmount,
     required this.amountPaid,

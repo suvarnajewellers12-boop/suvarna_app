@@ -5,11 +5,13 @@ import 'package:suvarna_jewellers/features/schemes/data/scheme_model.dart';
 class SchemeCard extends StatelessWidget {
   final SchemeModel scheme;
   final VoidCallback onEnroll;
+  final bool isEnrolled;
 
   const SchemeCard({
     super.key,
     required this.scheme,
     required this.onEnroll,
+    required this.isEnrolled,
   });
 
   @override
@@ -38,38 +40,13 @@ class SchemeCard extends StatelessWidget {
               width: double.infinity,
               color: const Color(0xFFD4AF37),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 18,
-                vertical: 20,
+                vertical: 24,
               ),
               child: Column(
                 children: [
-                  Container(
-                    width: 72,
-                    height: 72,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFE7D7A8),
-                        width: 4,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        "0/${scheme.durationMonths}",
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF3B2A1F),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
                   Text(
                     scheme.name,
                     style: GoogleFonts.playfairDisplay(
@@ -80,7 +57,7 @@ class SchemeCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   RichText(
                     text: TextSpan(
@@ -108,8 +85,11 @@ class SchemeCard extends StatelessWidget {
 
                   Row(
                     children: [
-                      const Icon(Icons.check,
-                          size: 16, color: Color(0xFFD4AF37)),
+                      const Icon(
+                        Icons.check,
+                        size: 16,
+                        color: Color(0xFFD4AF37),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         "${scheme.durationMonths} monthly installments",
@@ -125,8 +105,11 @@ class SchemeCard extends StatelessWidget {
 
                   Row(
                     children: [
-                      const Icon(Icons.auto_awesome,
-                          size: 16, color: Color(0xFFD4AF37)),
+                      const Icon(
+                        Icons.auto_awesome,
+                        size: 16,
+                        color: Color(0xFFD4AF37),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         "Get Maturity Value: ₹${scheme.maturityAmount}",
@@ -138,21 +121,24 @@ class SchemeCard extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 24),
 
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: onEnroll,
+                      onPressed: isEnrolled ? null : onEnroll,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD4AF37),
+                        backgroundColor: isEnrolled
+                            ? Colors.grey.shade400
+                            : const Color(0xFFD4AF37),
+                        disabledBackgroundColor: Colors.grey.shade400,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(22),
                         ),
                       ),
                       child: Text(
-                        "Enroll Now",
+                        isEnrolled ? "Enrolled" : "Enroll Now",
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,

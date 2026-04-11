@@ -3,30 +3,48 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:suvarna_jewellers/features/schemes/data/scheme_model.dart';
 import 'package:suvarna_jewellers/features/schemes/data/scheme_service.dart';
+import 'package:suvarna_jewellers/features/schemes/data/enrolled_scheme_service.dart';
+import 'package:suvarna_jewellers/features/schemes/models/enrolled_scheme.dart';
 import 'package:suvarna_jewellers/features/schemes/presentation/widgets/scheme_card.dart';
-import 'contact_screen.dart';
-import '../data/scheme_model.dart';
+import '../data/payment_service.dart';
 
-class SchemesScreen extends StatelessWidget {
+class SchemesScreen extends StatefulWidget {
   const SchemesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  State<SchemesScreen> createState() => _SchemesScreenState();
+}
 
+class _SchemesScreenState extends State<SchemesScreen> {
+  late Future<List<SchemeModel>> _schemesFuture;
+  late Future<List<EnrolledScheme>> _enrolledFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _schemesFuture = SchemeService.getSchemes();
+    _enrolledFuture = EnrolledSchemeService.getUserSchemes();
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _schemesFuture = SchemeService.getSchemes();
+      _enrolledFuture = EnrolledSchemeService.getUserSchemes();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-
-          /// Background Image
           Positioned.fill(
             child: Image.asset(
               "assets/images/showroom_bg.png",
               fit: BoxFit.cover,
             ),
           ),
-
-          /// Blur Layer
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -35,13 +53,13 @@ class SchemesScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          /// Async Content
           SafeArea(
-            child: FutureBuilder<List<SchemeModel>>(
-              future: SchemeService.getSchemes(),
+            child: FutureBuilder<List<dynamic>>(
+              future: Future.wait([
+                _schemesFuture,
+                _enrolledFuture,
+              ]),
               builder: (context, snapshot) {
-
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(
@@ -56,7 +74,10 @@ class SchemesScreen extends StatelessWidget {
                   );
                 }
 
-                final schemes = snapshot.data ?? [];
+                final schemes = snapshot.data![0] as List<SchemeModel>;
+                final enrolled = snapshot.data![1] as List<EnrolledScheme>;
+
+                final enrolledIds = enrolled.map((e) => e.name.trim()).toSet();
 
                 if (schemes.isEmpty) {
                   return const Center(
@@ -64,69 +85,78 @@ class SchemesScreen extends StatelessWidget {
                   );
                 }
 
-                return ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  physics: const BouncingScrollPhysics(),
-                  children: [
+                return RefreshIndicator(
+                  onRefresh: _refreshData,
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      const SizedBox(height: 28),
 
-                    const SizedBox(height: 28),
-
-                    /// Logo
-                    Center(
-                      child: Image.asset(
-                        "assets/images/suvarna_logo.png",
-                        height: 70,
-                      ),
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    /// Title
-                    Center(
-                      child: Text(
-                        "Saving Schemes",
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF3B2A1F),
+                      Center(
+                        child: Image.asset(
+                          "assets/images/suvarna_logo.png",
+                          height: 70,
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 8),
+                      const SizedBox(height: 18),
 
-                    /// Subtitle
-                    Center(
-                      child: Text(
-                        "Invest in your golden future",
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          color: const Color(0xFF7A7267),
+                      Center(
+                        child: Text(
+                          "Saving Schemes",
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF3B2A1F),
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 36),
+                      const SizedBox(height: 8),
 
-                    ...schemes.map(
-                          (scheme) => Padding(
-                        padding: const EdgeInsets.only(bottom: 28),
-                        child: SchemeCard(
-                          scheme: scheme,
-                          onEnroll: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const ContactScreen(),
-                              ),
-                            );
-                          },
+                      Center(
+                        child: Text(
+                          "Invest in your golden future",
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            color: const Color(0xFF7A7267),
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 120),
-                  ],
+                      const SizedBox(height: 36),
+
+                      ...schemes.map(
+                            (scheme) {
+                              final isEnrolled = enrolledIds.contains(scheme.name.trim());
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 28),
+                            child: SchemeCard(
+                              scheme: scheme,
+                              isEnrolled: isEnrolled,
+                              onEnroll: () async {
+                                PaymentService.startPayment(
+                                  context: context,
+                                  schemeId: scheme.id,
+                                  amount: scheme.monthlyAmount,
+                                );
+
+                                await Future.delayed(
+                                  const Duration(seconds: 2),
+                                );
+
+                                _refreshData();
+                              },
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 120),
+                    ],
+                  ),
                 );
               },
             ),
