@@ -188,6 +188,95 @@ class AuthService {
     }
   }
 
+  static Future<AuthResponse> sendForgotPasswordOtp({
+    required String mobile,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/send-otp"),
+        headers: { "Content-Type": "application/json" },
+        body: jsonEncode({
+          "phone": mobile,
+          "purpose": "forgot_password",
+        }),
+      ).timeout(const Duration(seconds: 20));
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "OTP send failed",
+      );
+    } catch (e) {
+      return AuthResponse(success: false, message: e.toString());
+    }
+  }
+
+  static Future<AuthResponse> verifyForgotPasswordOtp({
+    required String mobile,
+    required String otp,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/verify-otp"),
+        headers: { "Content-Type": "application/json" },
+        body: jsonEncode({
+          "phone": mobile,
+          "otp": otp,
+          "purpose": "forgot_password",
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data["type"] == "success") {
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "Invalid OTP",
+      );
+    } catch (e) {
+      return AuthResponse(success: false, message: e.toString());
+    }
+  }
+
+  static Future<AuthResponse> resetPassword({
+    required String mobile,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/forgot-password"),
+        headers: { "Content-Type": "application/json" },
+        body: jsonEncode({
+          "phone": mobile,
+          "otp": otp,
+          "newPassword": newPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "Reset failed",
+      );
+    } catch (e) {
+      return AuthResponse(success: false, message: e.toString());
+    }
+  }
+
   static Future<AuthResponse> setMpin({
     required String username,
     required String mpin,

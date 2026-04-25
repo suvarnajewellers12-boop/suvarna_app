@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/auth_service.dart';
 import '../../../screens/home_screen.dart';
 import 'mpin_screen.dart';
+import 'forgot_password_screen.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -291,6 +292,30 @@ class _LoginScreenState extends State<LoginScreen> {
                               : const Text(
                             "Continue",
                             style: TextStyle(fontSize: 15),
+                          ),
+                        ),
+                      ),
+                      // ADD after the Continue ElevatedButton's SizedBox:
+                      const SizedBox(height: 16),
+
+                      Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ForgotPasswordScreen(),
+                              ),
+                            );
+                          },
+                          child: Text(
+                            "Forgot Password?",
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: const Color(0xFFB48A2C),
+                              decoration: TextDecoration.underline,
+                              decorationColor: const Color(0xFFB48A2C),
+                            ),
                           ),
                         ),
                       ),
