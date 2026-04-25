@@ -1,44 +1,16 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:suvarna_jewellers/features/schemes/data/enrolled_scheme_service.dart';
+import 'package:suvarna_jewellers/features/schemes/models/enrolled_scheme.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-
-    final notifications = [
-      {
-        "title": "Payment Reminder",
-        "desc": "Your scheme installment of ₹1,000 is due on 15 Mar 2026.",
-        "time": "2 hours ago",
-        "icon": Icons.credit_card
-      },
-      {
-        "title": "New Scheme Available",
-        "desc": "Suvarna Diamond Savings scheme is now open for enrollment!",
-        "time": "1 day ago",
-        "icon": Icons.card_giftcard
-      },
-      {
-        "title": "Payment Received",
-        "desc": "Your payment of ₹1,000 for Gold Savings has been recorded.",
-        "time": "3 days ago",
-        "icon": Icons.calendar_today
-      },
-      {
-        "title": "Rate Update",
-        "desc": "Gold rate has been updated to ₹7,250/gram (22K).",
-        "time": "5 days ago",
-        "icon": Icons.notifications
-      }
-    ];
-
     return Scaffold(
       body: Stack(
         children: [
-
-          /// BACKGROUND
           Positioned.fill(
             child: Image.asset(
               "assets/images/showroom_bg.png",
@@ -46,7 +18,6 @@ class NotificationsScreen extends StatelessWidget {
             ),
           ),
 
-          /// BLUR
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -57,140 +28,200 @@ class NotificationsScreen extends StatelessWidget {
           ),
 
           SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  child: ConstrainedBox(
-                    constraints:
-                    BoxConstraints(minHeight: constraints.maxHeight),
+            child: FutureBuilder<List<EnrolledScheme>>(
+              future: EnrolledSchemeService.getUserSchemes(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
 
-                    child: Column(
-                      children: [
+                final schemes = snapshot.data!;
 
-                        /// HEADER
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Row(
-                            children: [
+                final notifications = schemes
+                    .where((s) => s.nextDueDate != "Completed")
+                    .map((scheme) {
+                  final parts = scheme.nextDueDate.split("-");
 
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back_ios_new),
-                                onPressed: () => Navigator.pop(context),
+                  if (parts.length != 3) return null;
+
+                  final dueDate = DateTime(
+                    int.parse(parts[2]),
+                    int.parse(parts[1]),
+                    int.parse(parts[0]),
+                  );
+
+                  final today = DateTime.now();
+
+                  final diff =
+                      dueDate.difference(DateTime(today.year, today.month, today.day)).inDays;
+
+                  if (diff > 5) return null;
+
+                  String desc;
+
+                  if (diff > 1) {
+                    desc = "${scheme.name} payment due in $diff days";
+                  } else if (diff == 1) {
+                    desc = "${scheme.name} payment due tomorrow";
+                  } else if (diff == 0) {
+                    desc = "${scheme.name} payment due today";
+                  } else {
+                    desc = "${scheme.name} payment overdue. Visit showroom.";
+                  }
+
+                  return {
+                    "title": "Scheme Reminder",
+                    "desc": desc,
+                    "icon": Icons.notifications,
+                  };
+                }).whereType<Map<String, dynamic>>().toList();
+
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon:
+                                    const Icon(Icons.arrow_back_ios_new),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Notifications",
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
-
-                              const SizedBox(width: 8),
-
-                              const Text(
-                                "Notifications",
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        /// CARD
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1E8DA),
-                              borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Column(
-                              children: List.generate(notifications.length, (i) {
 
-                                final n = notifications[i];
+                            const SizedBox(height: 10),
 
-                                return Column(
-                                  children: [
+                            Padding(
+                              padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1E8DA),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: notifications.isEmpty
+                                    ? const Padding(
+                                  padding: EdgeInsets.all(20),
+                                  child: Text(
+                                    "No notifications right now",
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                )
+                                    : Column(
+                                  children: List.generate(
+                                    notifications.length,
+                                        (i) {
+                                      final n = notifications[i];
 
-                                    if (i != 0)
-                                      Divider(
-                                        height: 1,
-                                        color: Colors.grey.shade300,
-                                      ),
-
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 14),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                      return Column(
                                         children: [
-
-                                          /// ICON
-                                          Container(
-                                            height: 40,
-                                            width: 40,
-                                            decoration: const BoxDecoration(
-                                              color: Color(0xFFE6D7C3),
-                                              shape: BoxShape.circle,
+                                          if (i != 0)
+                                            Divider(
+                                              height: 1,
+                                              color:
+                                              Colors.grey.shade300,
                                             ),
-                                            child: Icon(
-                                              n["icon"] as IconData,
-                                              color: const Color(0xFFB78628),
-                                              size: 20,
-                                            ),
-                                          ),
 
-                                          const SizedBox(width: 12),
-
-                                          /// TEXT
-                                          Expanded(
-                                            child: Column(
+                                          Padding(
+                                            padding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 14),
+                                            child: Row(
                                               crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                               children: [
-
-                                                Text(
-                                                  n["title"] as String,
-                                                  style: const TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w600,
+                                                Container(
+                                                  height: 40,
+                                                  width: 40,
+                                                  decoration:
+                                                  const BoxDecoration(
+                                                    color:
+                                                    Color(0xFFE6D7C3),
+                                                    shape:
+                                                    BoxShape.circle,
+                                                  ),
+                                                  child: Icon(
+                                                    n["icon"]
+                                                    as IconData,
+                                                    color: const Color(
+                                                        0xFFB78628),
+                                                    size: 20,
                                                   ),
                                                 ),
 
-                                                const SizedBox(height: 2),
+                                                const SizedBox(width: 12),
 
-                                                Text(
-                                                  n["desc"] as String,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: Color(0xFF6E665A),
-                                                  ),
-                                                ),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                    CrossAxisAlignment
+                                                        .start,
+                                                    children: [
+                                                      Text(
+                                                        n["title"]
+                                                        as String,
+                                                        style:
+                                                        const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                          FontWeight
+                                                              .w600,
+                                                        ),
+                                                      ),
 
-                                                const SizedBox(height: 4),
+                                                      const SizedBox(
+                                                          height: 2),
 
-                                                Text(
-                                                  n["time"] as String,
-                                                  style: const TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.grey,
+                                                      Text(
+                                                        n["desc"]
+                                                        as String,
+                                                        style:
+                                                        const TextStyle(
+                                                          fontSize: 13,
+                                                          color: Color(
+                                                              0xFF6E665A),
+                                                        ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
                                         ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
 
-                        const SizedBox(height: 40),
-                      ],
-                    ),
-                  ),
+                            const SizedBox(height: 40),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),

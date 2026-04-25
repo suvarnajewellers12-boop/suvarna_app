@@ -20,12 +20,10 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _shimmerAnimation;
 
-
   @override
   void initState() {
     super.initState();
 
-    // Main logo animation
     _mainController =
         AnimationController(vsync: this, duration: const Duration(seconds: 3));
 
@@ -48,7 +46,6 @@ class _SplashScreenState extends State<SplashScreen>
         ));
 
     _mainController.forward();
-
 
     Future.delayed(const Duration(seconds: 3), () async {
       if (!mounted) return;
@@ -77,8 +74,6 @@ class _SplashScreenState extends State<SplashScreen>
       }
     });
   }
-
-
 
   @override
   void dispose() {
@@ -124,7 +119,6 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: const Color(0xFFF5EBDD),
       body: Stack(
         children: [
-
           Center(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -146,8 +140,3 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
-
-
-
-
-

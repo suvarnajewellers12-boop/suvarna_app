@@ -118,6 +118,7 @@ class AuthService {
           username: mobile,
         );
       }
+
       return AuthResponse(
         success: false,
         message: data["message"] ?? "Signup failed",
@@ -165,9 +166,13 @@ class AuthService {
           await SessionManager.saveUserId(user["id"].toString());
         }
 
+        // ← ADD: read mpinExists flag from backend
+        final bool mpinExists = data["mpinExists"] ?? false;
+
         return AuthResponse(
           success: true,
           username: identifier,
+          mpinExists: mpinExists,   // ← ADD
         );
       }
 

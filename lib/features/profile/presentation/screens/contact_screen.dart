@@ -1,16 +1,78 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-class ContactScreen extends StatelessWidget {
+class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
+
+  @override
+  State<ContactScreen> createState() => _ContactScreenState();
+}
+
+class _ContactScreenState extends State<ContactScreen> {
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final messageController = TextEditingController();
+
+  bool isSending = false;
+
+  Future<void> sendMessage() async {
+    if (nameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        messageController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill all fields")),
+      );
+      return;
+    }
+
+    setState(() {
+      isSending = true;
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse("https://suvarna-jewellers-customer-backend.vercel.app/api/contact"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "name": nameController.text.trim(),
+          "email": emailController.text.trim(),
+          "message": messageController.text.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        nameController.clear();
+        emailController.clear();
+        messageController.clear();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Message sent successfully")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to send message")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    }
+
+    setState(() {
+      isSending = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-
-          /// showroom background
           Positioned.fill(
             child: Image.asset(
               "assets/images/showroom_bg.png",
@@ -18,7 +80,6 @@ class ContactScreen extends StatelessWidget {
             ),
           ),
 
-          /// blur overlay (same as Home/Profile)
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -29,22 +90,16 @@ class ContactScreen extends StatelessWidget {
           ),
 
           SafeArea(
-            child: Column(
-              children: [
-
-                /// HEADER
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
                     children: [
-
                       IconButton(
                         icon: const Icon(Icons.arrow_back_ios_new),
                         onPressed: () => Navigator.pop(context),
                       ),
-
-                      const SizedBox(width: 8),
-
                       const Text(
                         "Contact Us",
                         style: TextStyle(
@@ -54,80 +109,78 @@ class ContactScreen extends StatelessWidget {
                       )
                     ],
                   ),
-                ),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-                /// LOGO
-                Image.asset(
-                  "assets/images/suvarna_logo.png",
-                  height: 60,
-                ),
-
-                const SizedBox(height: 16),
-
-                /// TITLE
-                const Text(
-                  "Contact Us to Enroll",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 30),
-                  child: Text(
-                    "Please visit our showroom or call us to complete your scheme enrollment.",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF6E665A),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 30),
-
-                /// CONTACT CARD
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
+                  Container(
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1E8DA),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Column(
                       children: [
-
-                        contactTile(
-                          Icons.phone,
-                          "Call Us",
-                          "+91 98765 43210",
-                        ),
-
-                        const Divider(height: 1),
-
-                        contactTile(
-                          Icons.chat,
-                          "WhatsApp",
-                          "Message us directly",
-                        ),
-
-                        const Divider(height: 1),
-
-                        contactTile(
+                        contactRow(Icons.phone, "Phone", "+91 98765 43210"),
+                        const SizedBox(height: 20),
+                        contactRow(Icons.email, "Email",
+                            "support@suvarnajewellers.com"),
+                        const SizedBox(height: 20),
+                        contactRow(
                           Icons.location_on,
-                          "Visit Showroom",
-                          "MG Road, Bangalore",
+                          "Address",
+                          "Suvarna Jewellers Showroom\nD.No 10-45, Main Road, Gajuwaka\nVisakhapatnam, Andhra Pradesh",
                         ),
+
+                        const SizedBox(height: 28),
+
+                        inputField("Your Name", nameController),
+
+                        const SizedBox(height: 14),
+
+                        inputField("Email", emailController),
+
+                        const SizedBox(height: 14),
+
+                        inputField(
+                          "Your Message",
+                          messageController,
+                          maxLines: 4,
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFB78628),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(double.infinity, 52),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            onPressed: isSending ? null : sendMessage,
+                            icon: isSending
+                                ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                                : const Icon(Icons.send),
+                            label: Text(
+                              isSending ? "Sending..." : "Send Message",
+                            ),
+                          ),
+                        )
                       ],
                     ),
-                  ),
-                ),
-              ],
+                  )
+                ],
+              ),
             ),
           ),
         ],
@@ -135,48 +188,25 @@ class ContactScreen extends StatelessWidget {
     );
   }
 
-  Widget contactTile(
-      IconData icon,
-      String title,
-      String subtitle,
-      ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        children: [
-
-          /// icon circle
-          Container(
-            height: 40,
-            width: 40,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE6D7C3),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: Color(0xFFB78628),
-              size: 20,
-            ),
-          ),
-
-          const SizedBox(width: 14),
-
-          /// text
-          Column(
+  Widget contactRow(IconData icon, String title, String subtitle) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          backgroundColor: const Color(0xFFE6D7C3),
+          child: Icon(icon, color: const Color(0xFFB78628)),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                ),
-              ),
-
-              const SizedBox(height: 2),
-
+              Text(title,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 13,
+                  )),
+              const SizedBox(height: 4),
               Text(
                 subtitle,
                 style: const TextStyle(
@@ -185,8 +215,28 @@ class ContactScreen extends StatelessWidget {
                 ),
               ),
             ],
-          )
-        ],
+          ),
+        )
+      ],
+    );
+  }
+
+  Widget inputField(
+      String hint,
+      TextEditingController controller, {
+        int maxLines = 1,
+      }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.6),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }

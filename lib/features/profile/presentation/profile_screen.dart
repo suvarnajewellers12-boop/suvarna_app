@@ -1,14 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:suvarna_jewellers/core/session_manager.dart';
-import 'package:suvarna_jewellers/features/profile/presentation/screens/edit_profile_screen.dart';
-import 'package:suvarna_jewellers/features/profile/presentation/screens/change_mpin_screen.dart';
+import 'package:suvarna_jewellers/features/auth/data/local_auth_database.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/notifications_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/contact_screen.dart';
-import 'package:suvarna_jewellers/features/profile/presentation/screens/help_faq_screen.dart';
-import 'package:suvarna_jewellers/features/profile/presentation/screens/rate_app_screen.dart';
-import 'package:suvarna_jewellers/features/profile/presentation/screens/terms_screen.dart';
-import 'package:suvarna_jewellers/features/profile/presentation/screens/about_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/widgets/profile_menu_tile.dart';
 import 'package:suvarna_jewellers/screens/auth_choice_screen.dart';
 
@@ -20,8 +15,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-
   String? mobile;
+  String? fullName;
 
   @override
   void initState() {
@@ -30,10 +25,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
-    final savedMobile = await SessionManager.getUsername();
+    final username = await SessionManager.getUsername();
+
+    if (username == null) return;
+
+    final user = await LocalAuthDatabase.findByUsername(username);
+
+    print("USERNAME: $username");
+    print("USER DATA: $user");
+
+    final dbName = user?["name"]?.toString().trim();
 
     setState(() {
-      mobile = savedMobile;
+      mobile = user?["phone"] ?? username;
+
+      fullName = (dbName != null && dbName.isNotEmpty)
+          ? dbName
+          : username.split(RegExp(r'[^a-zA-Z]')).first;
+
+      print("FINAL NAME: $fullName");
     });
   }
 
@@ -49,7 +59,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     if (mobile == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -59,8 +68,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: Stack(
         children: [
-
-          /// Background Image
           Positioned.fill(
             child: Image.asset(
               "assets/images/showroom_bg.png",
@@ -68,7 +75,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
 
-          /// Blur Overlay (same as HomeScreen)
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -78,188 +84,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
 
-          /// Page Content
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: Column(
-                children: [
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 24),
 
-                  const SizedBox(height: 50),
-
-                  Image.asset(
-                    "assets/images/suvarna_logo.png",
-                    height: 50,
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    "My Profile",
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  /// USER CARD
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1E8DA),
-                      borderRadius: BorderRadius.circular(16),
+                    Image.asset(
+                      "assets/images/suvarna_logo.png",
+                      height: 50,
                     ),
-                    child: Row(
-                      children: [
 
-                        const CircleAvatar(
-                          radius: 28,
-                          backgroundColor: Color(0xFFE6D7C3),
-                          child: Icon(
-                            Icons.person,
-                            color: Color(0xFFB78628),
+                    const SizedBox(height: 8),
+
+                    const Text(
+                      "My Profile",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1E8DA),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 28,
+                            backgroundColor: Color(0xFFE6D7C3),
+                            child: Icon(
+                              Icons.person,
+                              color: Color(0xFFB78628),
+                            ),
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (fullName != null && fullName!.trim().isNotEmpty)
+                                    ? fullName!
+                                    : "Customer",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Text(
+                                "+91 $mobile",
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1E8DA),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          ProfileMenuTile(
+                            icon: Icons.notifications,
+                            title: "Notifications",
+                            subtitle: "Scheme payment reminders",
+                            onTap: () =>
+                                push(context, const NotificationsScreen()),
+                          ),
+
+                          ProfileMenuTile(
+                            icon: Icons.message,
+                            title: "Contact Us",
+                            subtitle: "Get in touch with showroom",
+                            onTap: () =>
+                                push(context, const ContactScreen()),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF1E8DA),
+                          foregroundColor: Colors.red,
+                          elevation: 0,
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-
-                        const SizedBox(width: 14),
-
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Customer",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              "+91 $mobile",
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  sectionTitle("ACCOUNT"),
-
-                  menuCard([
-                    ProfileMenuTile(
-                        icon: Icons.person,
-                        title: "Edit Profile",
-                        subtitle: "Name, mobile number",
-                        onTap: () =>
-                            push(context, const EditProfileScreen())),
-
-                    ProfileMenuTile(
-                        icon: Icons.lock,
-                        title: "Change MPIN",
-                        subtitle: "Update your security PIN",
-                        onTap: () =>
-                            push(context, const ChangeMPINScreen())),
-
-                    ProfileMenuTile(
-                        icon: Icons.notifications,
-                        title: "Notifications",
-                        subtitle: "Manage push notifications",
-                        onTap: () =>
-                            push(context, const NotificationsScreen())),
-                  ]),
-
-                  sectionTitle("GENERAL"),
-
-                  menuCard([
-                    ProfileMenuTile(
-                        icon: Icons.message,
-                        title: "Contact Us",
-                        subtitle: "Get in touch with us",
-                        onTap: () =>
-                            push(context, const ContactScreen())),
-
-                    ProfileMenuTile(
-                        icon: Icons.help,
-                        title: "Help & FAQ",
-                        subtitle: "Common questions answered",
-                        onTap: () =>
-                            push(context, const HelpFAQScreen())),
-
-                    ProfileMenuTile(
-                        icon: Icons.star,
-                        title: "Rate the App",
-                        subtitle: "Share your feedback",
-                        onTap: () =>
-                            push(context, const RateAppScreen())),
-
-                    ProfileMenuTile(
-                        icon: Icons.description,
-                        title: "Terms & Conditions",
-                        subtitle: "Our policies",
-                        onTap: () =>
-                            push(context, const TermsScreen())),
-
-                    ProfileMenuTile(
-                        icon: Icons.info,
-                        title: "About Suvarna Jewellers",
-                        subtitle: "Since 1985",
-                        onTap: () =>
-                            push(context, const AboutScreen())),
-                  ]),
-
-                  const SizedBox(height: 20),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade50,
-                        foregroundColor: Colors.red,
-                        minimumSize: const Size(double.infinity, 48),
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout),
+                        label: const Text("Logout"),
                       ),
-                      onPressed: _logout,
-                      icon: const Icon(Icons.logout),
-                      label: const Text("Logout"),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-                ],
+                  ],
+                ),
               ),
             ),
-          )
+          ),
         ],
       ),
-    );
-  }
-
-  Widget sectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey),
-        ),
-      ),
-    );
-  }
-
-  Widget menuCard(List<Widget> children) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1E8DA),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(children: children),
     );
   }
 

@@ -1,65 +1,50 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/rate_model.dart';
 
 class RateService {
   static Future<List<RateModel>> getRates() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final response = await http.get(
+        Uri.parse("https://suvarnagold-16e5.vercel.app/api/rates"),
+      );
 
-    return [
-      RateModel(
-        label: "Gold 22K",
-        rate: 6850,
-        change: 45,
-        unit: "₹/g",
-        purity: "91.6%",
-        per10g: 68500,
-        per100g: 685000,
-        perTola: 79913,
-        lastUpdated: "2 Mar 2026, 10:30 AM",
-      ),
-      RateModel(
-        label: "Gold 24K",
-        rate: 7450,
-        change: 60,
-        unit: "₹/g",
-        purity: "99.9%",
-        per10g: 74500,
-        per100g: 745000,
-        perTola: 86915,
-        lastUpdated: "2 Mar 2026, 10:30 AM",
-      ),
-      RateModel(
-        label: "Gold 18K",
-        rate: 5138,
-        change: 30,
-        unit: "₹/g",
-        purity: "75.0%",
-        per10g: 51380,
-        per100g: 513800,
-        perTola: 59929,
-        lastUpdated: "2 Mar 2026, 10:30 AM",
-      ),
-      RateModel(
-        label: "Silver 999",
-        rate: 92,
-        change: -1.5,
-        unit: "₹/g",
-        purity: "99.9%",
-        per10g: 920,
-        per100g: 9200,
-        perTola: 1073,
-        lastUpdated: "2 Mar 2026, 10:30 AM",
-      ),
-      RateModel(
-        label: "Silver 925",
-        rate: 85,
-        change: -1.2,
-        unit: "₹/g",
-        purity: "92.5%",
-        per10g: 850,
-        per100g: 8500,
-        perTola: 992,
-        lastUpdated: "2 Mar 2026, 10:30 AM",
-      ),
-    ];
+      print("RATE STATUS: ${response.statusCode}");
+      print("RATE BODY: ${response.body}");
+
+      if (response.statusCode != 200) {
+        return [];
+      }
+
+      final data = jsonDecode(response.body);
+
+      return [
+        RateModel(
+          metal: "Gold 24K",
+          rate: _cleanRate(data["gold24"]),
+        ),
+        RateModel(
+          metal: "Gold 22K",
+          rate: _cleanRate(data["gold22"]),
+        ),
+        RateModel(
+          metal: "Gold 18K",
+          rate: _cleanRate(data["gold18"]),
+        ),
+        RateModel(
+          metal: "Silver",
+          rate: _cleanRate(data["silver"]),
+        ),
+      ];
+    } catch (e) {
+      print("RATE ERROR: $e");
+      return [];
+    }
+  }
+
+  static double _cleanRate(dynamic value) {
+    return double.tryParse(
+      value.toString().replaceAll("₹", "").replaceAll(",", ""),
+    ) ?? 0;
   }
 }

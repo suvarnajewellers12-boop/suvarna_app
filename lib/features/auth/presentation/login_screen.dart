@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../data/auth_service.dart';
 import '../../../screens/home_screen.dart';
-
+import 'mpin_screen.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -57,10 +57,16 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+// ← REPLACE Navigator block
+    final String username = _identifierController.text.trim();
+
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
+        builder: (_) => MPinScreen(
+          mode: response.mpinExists ? MPinMode.verify : MPinMode.setup,
+          username: username,
+        ),
       ),
           (route) => false,
     );
