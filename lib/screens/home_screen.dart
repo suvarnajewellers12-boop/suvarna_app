@@ -13,7 +13,7 @@ import 'package:suvarna_jewellers/features/products/presentation/products_screen
 import 'package:suvarna_jewellers/features/rates/presentation/rates_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/profile_screen.dart';
 import 'package:suvarna_jewellers/features/schemes/data/payment_service.dart';
-
+import 'package:suvarna_jewellers/core/notification_service.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -35,6 +35,8 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await Future.delayed(const Duration(milliseconds: 1200));
       refreshSchemes();
+      // ← ADD: Check due dates and fire local notifications
+      await NotificationService.checkAndNotifyDueDates();
     });
   }
 

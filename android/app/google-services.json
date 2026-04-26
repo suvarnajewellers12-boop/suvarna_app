@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "323391620783",
+    "project_id": "suvarna-jewellers-42d2c",
+    "storage_bucket": "suvarna-jewellers-42d2c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:323391620783:android:26b86dfd6bc7961e3db65a",
+        "android_client_info": {
+          "package_name": "com.suvarna.jewellers.suvarna_jewellers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAgp_0UEd5vE9us_ApTFbWJwgq8eePs6NQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

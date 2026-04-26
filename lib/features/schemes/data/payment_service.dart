@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/session_manager.dart';
-
+import 'package:suvarna_jewellers/core/notification_service.dart';
 class PaymentService {
   static final Razorpay _razorpay = Razorpay();
 
@@ -160,10 +160,17 @@ class PaymentService {
         ),
       );
 
+      // Fire payment success notification
+      await NotificationService.showLocalNotification(
+        title: "Payment Successful ✅",
+        body: "Your scheme payment has been received. Thank you!",
+        id: 1,
+      );
+
       if (onSuccess != null) {
         onSuccess();
       }
-    } else {
+    } {
       print("VERIFY STATUS: ${response.statusCode}");
       print("VERIFY BODY: ${response.body}");
 
