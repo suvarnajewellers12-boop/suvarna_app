@@ -3,6 +3,7 @@ class CouponModel {
   final String code;
   final bool isUsed;
   final bool isActive;
+  final bool isCompleted;
   final double totalCashValue;
   final double totalWeightGrams;
   final String schemeName;
@@ -19,6 +20,7 @@ class CouponModel {
     required this.code,
     required this.isUsed,
     required this.isActive,
+    required this.isCompleted,
     required this.totalCashValue,
     required this.totalWeightGrams,
     required this.schemeName,
@@ -40,6 +42,7 @@ class CouponModel {
       code: json["code"]?.toString() ?? "",
       isUsed: json["isUsed"] == true,
       isActive: json["isActive"] == true,
+      isCompleted: cs["isCompleted"] == true,
       totalCashValue: double.tryParse(json["totalCashValue"].toString()) ?? 0,
       totalWeightGrams: double.tryParse(json["totalWeightGrams"].toString()) ?? 0,
       schemeName: scheme["name"]?.toString() ?? "Scheme",

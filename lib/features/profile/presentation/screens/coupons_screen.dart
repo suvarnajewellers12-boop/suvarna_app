@@ -40,7 +40,7 @@ class _CouponsScreenState extends State<CouponsScreen>
   }
 
   List<CouponModel> get _activeCoupons =>
-      _coupons.where((c) => !c.isUsed).toList();
+      _coupons.where((c) => c.isCompleted && !c.isUsed).toList();
 
   List<CouponModel> get _usedCoupons =>
       _coupons.where((c) => c.isUsed).toList();
