@@ -4,6 +4,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/session_manager.dart';
 import 'package:suvarna_jewellers/core/notification_service.dart';
+
 class PaymentService {
   static final Razorpay _razorpay = Razorpay();
 
@@ -64,11 +65,13 @@ class PaymentService {
             }
             return;
           }
+
           print("ORDER ID: ${response.orderId}");
           print("PAYMENT ID: ${response.paymentId}");
           print("SIGNATURE: ${response.signature}");
           print("SCHEME ID SENT: $schemeId");
           print("USER ID SENT: $userId");
+
           await _verifyPayment(
             context: context,
             token: token,
@@ -153,14 +156,15 @@ class PaymentService {
 
     if (!context.mounted) return;
 
-    if (response.statusCode == 200) {
+    final body = jsonDecode(response.body);
+
+    if (response.statusCode == 200 && body["status"] == "Success") {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Payment successful"),
         ),
       );
 
-      // Fire payment success notification
       await NotificationService.showLocalNotification(
         title: "Payment Successful ✅",
         body: "Your scheme payment has been received. Thank you!",
@@ -170,7 +174,7 @@ class PaymentService {
       if (onSuccess != null) {
         onSuccess();
       }
-    } {
+    } else {
       print("VERIFY STATUS: ${response.statusCode}");
       print("VERIFY BODY: ${response.body}");
 

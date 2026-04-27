@@ -6,7 +6,7 @@ import 'package:suvarna_jewellers/features/profile/presentation/screens/notifica
 import 'package:suvarna_jewellers/features/profile/presentation/screens/contact_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/widgets/profile_menu_tile.dart';
 import 'package:suvarna_jewellers/screens/auth_choice_screen.dart';
-
+import 'package:suvarna_jewellers/features/profile/presentation/screens/coupons_screen.dart';
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -172,6 +172,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             subtitle: "Scheme payment reminders",
                             onTap: () =>
                                 push(context, const NotificationsScreen()),
+                          ),
+
+                          ProfileMenuTile(
+                            icon: Icons.card_giftcard,
+                            title: "My Coupons",
+                            subtitle: "View your earned reward coupons",
+                            onTap: () => push(context, const CouponsScreen()),
                           ),
 
                           ProfileMenuTile(
