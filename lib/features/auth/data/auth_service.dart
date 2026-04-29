@@ -318,6 +318,8 @@ class AuthService {
     return AuthResponse(success: true);
   }
 
+
+
   static Future<AuthResponse> verifyMpin({
     required String username,
     required String mpin,
@@ -343,6 +345,109 @@ class AuthService {
       return AuthResponse(
         success: false,
         message: data["message"] ?? "Incorrect MPIN",
+      );
+    } catch (e) {
+      return AuthResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<AuthResponse> sendForgotMpinOtp({
+    required String mobile,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/send-otp"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": mobile,
+          "purpose": "forgot_mpin",
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "OTP send failed",
+      );
+    } catch (e) {
+      return AuthResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<AuthResponse> verifyForgotMpinOtp({
+    required String mobile,
+    required String otp,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/verify-otp"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": mobile,
+          "otp": otp,
+          "purpose": "forgot_mpin",
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "Invalid OTP",
+      );
+    } catch (e) {
+      return AuthResponse(
+        success: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<AuthResponse> resetMpin({
+    required String mobile,
+    required String mpin,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse("$baseUrl/reset-mpin"),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "phone": mobile,
+          "mpin": mpin,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await SessionManager.saveMpin(mobile, mpin);
+        return AuthResponse(success: true);
+      }
+
+      return AuthResponse(
+        success: false,
+        message: data["message"] ?? "MPIN reset failed",
       );
     } catch (e) {
       return AuthResponse(

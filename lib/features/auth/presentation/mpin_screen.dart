@@ -4,7 +4,8 @@ import '../../../screens/home_screen.dart';
 import '../data/auth_service.dart';
 import '../../../core/session_manager.dart';
 
-enum MPinMode { setup, verify }
+import 'forgot_mpin_screen.dart';
+enum MPinMode { setup, verify, forgotReset }
 
 class MPinScreen extends StatefulWidget {
   final MPinMode mode;
@@ -88,8 +89,13 @@ class _MPinScreenState extends State<MPinScreen> {
   }
 
   void _onComplete(String mpin) async {
-    if (widget.mode == MPinMode.setup) {
-      final result = await AuthService.setMpin(
+    if (widget.mode == MPinMode.setup || widget.mode == MPinMode.forgotReset) {
+      final result = widget.mode == MPinMode.forgotReset
+          ? await AuthService.resetMpin(
+        mobile: widget.username,
+        mpin: mpin,
+      )
+          : await AuthService.setMpin(
         username: widget.username,
         mpin: mpin,
       );
@@ -137,7 +143,8 @@ class _MPinScreenState extends State<MPinScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isSetup = widget.mode == MPinMode.setup;
+    final isSetup =
+        widget.mode == MPinMode.setup || widget.mode == MPinMode.forgotReset;
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
@@ -288,6 +295,29 @@ class _MPinScreenState extends State<MPinScreen> {
                       },
                     ),
                   ),
+
+                  if (widget.mode == MPinMode.verify) ...[
+                    const SizedBox(height: 18),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ForgotMpinScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "Forgot MPIN?",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFFB48A2C),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 40),
 
                   const SizedBox(height: 40),
                 ],
