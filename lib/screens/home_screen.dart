@@ -26,25 +26,25 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   Future<List<EnrolledScheme>>? _schemesFuture;
 
+  // Key to directly access SchemesScreen's state
+  final GlobalKey<SchemesScreenState> _schemesKey = GlobalKey<SchemesScreenState>();
+
   @override
   void initState() {
     super.initState();
-
-    // Load immediately from cache — no artificial delay
     _schemesFuture = EnrolledSchemeService.getUserSchemes();
-
-    // Notification check runs separately — doesn't block UI
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await NotificationService.checkAndNotifyDueDates();
     });
   }
 
-  // Only called after a payment — forces network fetch
   void refreshSchemes() {
     if (!mounted) return;
     setState(() {
       _schemesFuture = EnrolledSchemeService.getUserSchemes(forceRefresh: true);
     });
+    // Also refresh SchemesScreen sitting in IndexedStack
+    _schemesKey.currentState?.refreshData();
   }
 
   void _onLogout() async {
@@ -94,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildHomeContent(),
                 ProductsScreen(),
-                const SchemesScreen(),
+                SchemesScreen(key: _schemesKey), // connected via GlobalKey
                 RatesScreen(),
                 const ProfileScreen(),
               ],
@@ -110,7 +110,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return FutureBuilder<List<EnrolledScheme>>(
       future: _schemesFuture,
       builder: (context, snapshot) {
-        // Show spinner ONLY on first load (no cache yet)
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
@@ -124,7 +123,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return RefreshIndicator(
           onRefresh: () async {
-            // Pull-to-refresh: force network fetch
             EnrolledSchemeService.invalidateCache();
             refreshSchemes();
           },
@@ -217,7 +215,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Container(width: 80, height: 2, color: const Color(0xFFD4AF37)),
+                    Container(
+                      width: 80,
+                      height: 2,
+                      color: const Color(0xFFD4AF37),
+                    ),
                   ],
                 ),
 
@@ -279,7 +281,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  const Icon(Icons.chevron_right, size: 18, color: Color(0xFFD4AF37)),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 18,
+                    color: Color(0xFFD4AF37),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -287,7 +293,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Text(
                     "${scheme.monthsPaid}/${scheme.totalMonths} paid",
-                    style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF6E665A)),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: const Color(0xFF6E665A),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Text(
@@ -334,13 +343,19 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 20),
           Text(
             scheme.name,
-            style: GoogleFonts.playfairDisplay(fontSize: 20, fontWeight: FontWeight.w600),
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 22),
           _detailItem("Total Scheme Amount", "₹${scheme.totalAmount}"),
           _detailItem("Amount Paid", "₹${scheme.amountPaid}"),
           _detailItem("Balance Amount", "₹${scheme.amountBalance}"),
-          _detailItem("Months Completed", "${scheme.monthsPaid} of ${scheme.totalMonths}"),
+          _detailItem(
+            "Months Completed",
+            "${scheme.monthsPaid} of ${scheme.totalMonths}",
+          ),
           _detailItem("Last Payment Date", scheme.lastPaymentDate),
           _detailItem("Next Due Date", scheme.nextDueDate),
           const SizedBox(height: 24),
@@ -354,9 +369,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 schemeId: scheme.schemeId,
                 amount: (scheme.totalAmount / scheme.totalMonths).round(),
                 onSuccess: () {
-                  // Invalidate cache then force fresh fetch
                   EnrolledSchemeService.invalidateCache();
-                  refreshSchemes();
+                  refreshSchemes(); // refreshes both Home + Schemes tab
                 },
               );
             },
@@ -366,13 +380,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   : const Color(0xFFD4AF37),
               disabledBackgroundColor: Colors.grey.shade400,
               minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
             ),
             child: Text(
               scheme.monthsPaid >= scheme.totalMonths
                   ? "Completed"
                   : "Pay Now — ₹${(scheme.totalAmount / scheme.totalMonths).round()}/month",
-              style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -390,7 +409,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(label, style: GoogleFonts.poppins(fontSize: 13)),
           Text(
             value,
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
@@ -401,7 +423,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
       onTap: (i) {
-        // Just switch the tab — no fetch triggered
         setState(() => _currentIndex = i);
       },
       selectedItemColor: const Color(0xFFD4AF37),

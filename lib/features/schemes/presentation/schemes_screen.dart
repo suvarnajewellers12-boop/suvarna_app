@@ -12,10 +12,12 @@ class SchemesScreen extends StatefulWidget {
   const SchemesScreen({super.key});
 
   @override
-  State<SchemesScreen> createState() => _SchemesScreenState();
+  // CHANGED: private _SchemesScreenState → public SchemesScreenState
+  SchemesScreenState createState() => SchemesScreenState();
 }
 
-class _SchemesScreenState extends State<SchemesScreen> {
+// CHANGED: _ removed so HomeScreen can access it via GlobalKey
+class SchemesScreenState extends State<SchemesScreen> {
   late Future<List<SchemeModel>> _schemesFuture;
   late Future<List<EnrolledScheme>> _enrolledFuture;
 
@@ -26,11 +28,19 @@ class _SchemesScreenState extends State<SchemesScreen> {
     _enrolledFuture = EnrolledSchemeService.getUserSchemes();
   }
 
-  Future<void> _refreshData() async {
+  // PUBLIC method — HomeScreen calls this after payment
+  void refreshData() {
+    if (!mounted) return;
+    EnrolledSchemeService.invalidateCache();
     setState(() {
       _schemesFuture = SchemeService.getSchemes();
-      _enrolledFuture = EnrolledSchemeService.getUserSchemes();
+      _enrolledFuture = EnrolledSchemeService.getUserSchemes(forceRefresh: true);
     });
+  }
+
+  // Keep _refreshData for pull-to-refresh
+  Future<void> _refreshData() async {
+    refreshData();
   }
 
   @override
@@ -40,49 +50,34 @@ class _SchemesScreenState extends State<SchemesScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              "assets/images/showroom_bg.png",
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset("assets/images/showroom_bg.png", fit: BoxFit.cover),
           ),
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Container(
-                color: const Color(0xFFF5EBDD).withOpacity(0.65),
-              ),
+              child: Container(color: const Color(0xFFF5EBDD).withOpacity(0.65)),
             ),
           ),
           SafeArea(
             child: FutureBuilder<List<dynamic>>(
-              future: Future.wait([
-                _schemesFuture,
-                _enrolledFuture,
-              ]),
+              future: Future.wait([_schemesFuture, _enrolledFuture]),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFD4AF37),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
                   );
                 }
 
                 if (snapshot.hasError) {
-                  return const Center(
-                    child: Text("Failed to load schemes"),
-                  );
+                  return const Center(child: Text("Failed to load schemes"));
                 }
 
                 final schemes = snapshot.data![0] as List<SchemeModel>;
                 final enrolled = snapshot.data![1] as List<EnrolledScheme>;
-
                 final enrolledIds = enrolled.map((e) => e.name.trim()).toSet();
 
                 if (schemes.isEmpty) {
-                  return const Center(
-                    child: Text("No schemes available"),
-                  );
+                  return const Center(child: Text("No schemes available"));
                 }
 
                 return RefreshIndicator(
@@ -94,10 +89,7 @@ class _SchemesScreenState extends State<SchemesScreen> {
                       const SizedBox(height: 28),
 
                       Center(
-                        child: Image.asset(
-                          "assets/images/suvarna_logo.png",
-                          height: 70,
-                        ),
+                        child: Image.asset("assets/images/suvarna_logo.png", height: 70),
                       ),
 
                       const SizedBox(height: 18),
@@ -127,29 +119,28 @@ class _SchemesScreenState extends State<SchemesScreen> {
 
                       const SizedBox(height: 36),
 
-                      ...schemes.map(
-                            (scheme) {
-                              final isEnrolled = enrolledIds.contains(scheme.name.trim());
+                      ...schemes.map((scheme) {
+                        final isEnrolled = enrolledIds.contains(scheme.name.trim());
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 28),
-                            child: SchemeCard(
-                              scheme: scheme,
-                              isEnrolled: isEnrolled,
-                              onEnroll: () {
-                                PaymentService.startPayment(
-                                  context: context,
-                                  schemeId: scheme.id,
-                                  amount: scheme.monthlyAmount,
-                                  onSuccess: () {
-                                    _refreshData();
-                                  },
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 28),
+                          child: SchemeCard(
+                            scheme: scheme,
+                            isEnrolled: isEnrolled,
+                            onEnroll: () {
+                              PaymentService.startPayment(
+                                context: context,
+                                schemeId: scheme.id,
+                                amount: scheme.monthlyAmount,
+                                onSuccess: () {
+                                  // Refresh this screen directly
+                                  refreshData();
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      }),
 
                       const SizedBox(height: 120),
                     ],
