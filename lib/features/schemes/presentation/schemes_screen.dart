@@ -12,14 +12,13 @@ class SchemesScreen extends StatefulWidget {
   const SchemesScreen({super.key});
 
   @override
-  // CHANGED: private _SchemesScreenState → public SchemesScreenState
   SchemesScreenState createState() => SchemesScreenState();
 }
 
-// CHANGED: _ removed so HomeScreen can access it via GlobalKey
 class SchemesScreenState extends State<SchemesScreen> {
   late Future<List<SchemeModel>> _schemesFuture;
   late Future<List<EnrolledScheme>> _enrolledFuture;
+  bool _showGold = true;
 
   @override
   void initState() {
@@ -28,20 +27,17 @@ class SchemesScreenState extends State<SchemesScreen> {
     _enrolledFuture = EnrolledSchemeService.getUserSchemes();
   }
 
-  // PUBLIC method — HomeScreen calls this after payment
   void refreshData() {
     if (!mounted) return;
     EnrolledSchemeService.invalidateCache();
     setState(() {
       _schemesFuture = SchemeService.getSchemes();
-      _enrolledFuture = EnrolledSchemeService.getUserSchemes(forceRefresh: true);
+      _enrolledFuture =
+          EnrolledSchemeService.getUserSchemes(forceRefresh: true);
     });
   }
 
-  // Keep _refreshData for pull-to-refresh
-  Future<void> _refreshData() async {
-    refreshData();
-  }
+  Future<void> _refreshData() async => refreshData();
 
   @override
   Widget build(BuildContext context) {
@@ -50,106 +46,207 @@ class SchemesScreenState extends State<SchemesScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset("assets/images/showroom_bg.png", fit: BoxFit.cover),
+            child: Image.asset(
+              "assets/images/showroom_bg.png",
+              fit: BoxFit.cover,
+            ),
           ),
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: Container(color: const Color(0xFFF5EBDD).withOpacity(0.65)),
+              child: Container(
+                color: const Color(0xFFF5EBDD).withOpacity(0.65),
+              ),
             ),
           ),
           SafeArea(
-            child: FutureBuilder<List<dynamic>>(
-              future: Future.wait([_schemesFuture, _enrolledFuture]),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return const Center(child: Text("Failed to load schemes"));
-                }
-
-                final schemes = snapshot.data![0] as List<SchemeModel>;
-                final enrolled = snapshot.data![1] as List<EnrolledScheme>;
-                final enrolledIds = enrolled.map((e) => e.name.trim()).toSet();
-
-                if (schemes.isEmpty) {
-                  return const Center(child: Text("No schemes available"));
-                }
-
-                return RefreshIndicator(
-                  onRefresh: _refreshData,
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                // ── Fixed header ──────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                  child: Column(
                     children: [
-                      const SizedBox(height: 28),
-
                       Center(
-                        child: Image.asset("assets/images/suvarna_logo.png", height: 70),
-                      ),
-
-                      const SizedBox(height: 18),
-
-                      Center(
-                        child: Text(
-                          "Saving Schemes",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF3B2A1F),
-                          ),
+                        child: Image.asset(
+                          "assets/images/suvarna_logo.png",
+                          height: 56,
                         ),
                       ),
-
-                      const SizedBox(height: 8),
-
-                      Center(
-                        child: Text(
-                          "Invest in your golden future",
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            color: const Color(0xFF7A7267),
-                          ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Saving Schemes",
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF3B2A1F),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Invest in your golden future",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFF7A7267),
                         ),
                       ),
+                      const SizedBox(height: 16),
 
-                      const SizedBox(height: 36),
-
-                      ...schemes.map((scheme) {
-                        final isEnrolled = enrolledIds.contains(scheme.name.trim());
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 28),
-                          child: SchemeCard(
-                            scheme: scheme,
-                            isEnrolled: isEnrolled,
-                            onEnroll: () {
-                              PaymentService.startPayment(
-                                context: context,
-                                schemeId: scheme.id,
-                                amount: scheme.monthlyAmount,
-                                onSuccess: () {
-                                  // Refresh this screen directly
-                                  refreshData();
-                                },
-                              );
-                            },
-                          ),
-                        );
-                      }),
-
-                      const SizedBox(height: 120),
+                      // ── Gold / Cash filter ──────────────────────
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEDE0CC),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildFilterTab(
+                              label: "✦  Gold Schemes",
+                              selected: _showGold,
+                              onTap: () => setState(() => _showGold = true),
+                            ),
+                            _buildFilterTab(
+                              label: "₹  Cash Schemes",
+                              selected: !_showGold,
+                              onTap: () => setState(() => _showGold = false),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                );
-              },
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Scheme list ───────────────────────────────────
+                Expanded(
+                  child: FutureBuilder<List<dynamic>>(
+                    future: Future.wait([_schemesFuture, _enrolledFuture]),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFFD4AF37),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return const Center(
+                          child: Text("Failed to load schemes"),
+                        );
+                      }
+
+                      final allSchemes =
+                      snapshot.data![0] as List<SchemeModel>;
+                      final enrolled =
+                      snapshot.data![1] as List<EnrolledScheme>;
+                      final enrolledIds =
+                      enrolled.map((e) => e.name.trim()).toSet();
+
+                      // Filter by isWeightBased
+                      final schemes = allSchemes
+                          .where((s) =>
+                      _showGold ? s.isWeightBased : !s.isWeightBased)
+                          .toList();
+
+                      if (schemes.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _showGold
+                                    ? Icons.balance
+                                    : Icons.currency_rupee,
+                                size: 48,
+                                color:
+                                const Color(0xFFD4AF37).withOpacity(0.4),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _showGold
+                                    ? "No gold schemes available"
+                                    : "No cash schemes available",
+                                style: GoogleFonts.poppins(
+                                  color: const Color(0xFF7A7267),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return RefreshIndicator(
+                        color: const Color(0xFFD4AF37),
+                        onRefresh: _refreshData,
+                        child: ListView.builder(
+                          padding:
+                          const EdgeInsets.fromLTRB(20, 4, 20, 120),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: schemes.length,
+                          itemBuilder: (context, index) {
+                            final scheme = schemes[index];
+                            final isEnrolled =
+                            enrolledIds.contains(scheme.name.trim());
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: SchemeCard(
+                                scheme: scheme,
+                                isEnrolled: isEnrolled,
+                                onEnroll: () {
+                                  PaymentService.startPayment(
+                                    context: context,
+                                    schemeId: scheme.id,
+                                    amount: scheme.monthlyAmount,
+                                    onSuccess: refreshData,
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterTab({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFD4AF37) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : const Color(0xFF6E665A),
+            ),
+          ),
+        ),
       ),
     );
   }

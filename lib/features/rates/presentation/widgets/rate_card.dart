@@ -12,7 +12,6 @@ class RateCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.symmetric(vertical: 24),
-
       decoration: BoxDecoration(
         color: const Color(0xFFF6F0E4),
         borderRadius: BorderRadius.circular(20),
@@ -21,9 +20,9 @@ class RateCard extends StatelessWidget {
           width: 0.8,
         ),
       ),
-
       child: Column(
         children: [
+          // Metal name — keeps playfairDisplay (unchanged)
           Text(
             rate.metal,
             style: GoogleFonts.playfairDisplay(
@@ -35,19 +34,36 @@ class RateCard extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          Text(
-            "₹${rate.rate.toStringAsFixed(2)}",
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFFB78628),
-            ),
+          // Price — changed to poppins w700 for cleaner number display
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                "₹",
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFFB78628),
+                ),
+              ),
+              Text(
+                rate.rate.toStringAsFixed(2),
+                style: GoogleFonts.poppins(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFB78628),
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
           ),
 
           Text(
             "/gram",
             style: GoogleFonts.poppins(
-              fontSize: 14,
+              fontSize: 13,
               color: const Color(0xFF7A7267),
             ),
           ),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:vibration/vibration.dart';
 import '../../../screens/home_screen.dart';
 import '../data/auth_service.dart';
 import '../../../core/session_manager.dart';
-
 import 'forgot_mpin_screen.dart';
+
 enum MPinMode { setup, verify, forgotReset }
 
 class MPinScreen extends StatefulWidget {
@@ -31,12 +33,42 @@ class _MPinScreenState extends State<MPinScreen> {
 
   String get _currentValue => _isConfirmStep ? _confirmMpin : _mpin;
 
+  Future<void> _vibrateDigit() async {
+    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (hasVibrator) {
+      Vibration.vibrate(duration: 40, amplitude: 80);
+    } else {
+      HapticFeedback.mediumImpact();
+    }
+  }
+
+  Future<void> _vibrateError() async {
+    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (hasVibrator) {
+      await Vibration.vibrate(duration: 80);
+      await Future.delayed(const Duration(milliseconds: 60));
+      await Vibration.vibrate(duration: 80);
+    } else {
+      HapticFeedback.vibrate();
+    }
+  }
+
+  Future<void> _vibrateDelete() async {
+    final hasVibrator = await Vibration.hasVibrator() ?? false;
+    if (hasVibrator) {
+      Vibration.vibrate(duration: 25, amplitude: 50);
+    } else {
+      HapticFeedback.selectionClick();
+    }
+  }
+
   void _handleDigit(String digit) {
     if (_currentValue.length >= maxLength) return;
 
+    _vibrateDigit();
+
     setState(() {
       _error = null;
-
       if (_isConfirmStep) {
         _confirmMpin += digit;
       } else {
@@ -45,16 +77,17 @@ class _MPinScreenState extends State<MPinScreen> {
     });
 
     if (_currentValue.length == maxLength) {
-      Future.delayed(const Duration(milliseconds: 200), () {
+      // Reduced from 200ms to 80ms — just enough to show 4th dot
+      Future.delayed(const Duration(milliseconds: 80), () {
         _processCompletion();
       });
     }
   }
 
   void _handleDelete() {
+    _vibrateDelete();
     setState(() {
       _error = null;
-
       if (_isConfirmStep && _confirmMpin.isNotEmpty) {
         _confirmMpin = _confirmMpin.substring(0, _confirmMpin.length - 1);
       } else if (!_isConfirmStep && _mpin.isNotEmpty) {
@@ -70,15 +103,14 @@ class _MPinScreenState extends State<MPinScreen> {
     }
 
     if (!_isConfirmStep) {
-      setState(() {
-        _isConfirmStep = true;
-      });
+      setState(() => _isConfirmStep = true);
       return;
     }
 
     if (_mpin == _confirmMpin) {
       _onComplete(_mpin);
     } else {
+      _vibrateError();
       setState(() {
         _error = "MPIN does not match. Try again.";
         _mpin = '';
@@ -101,6 +133,7 @@ class _MPinScreenState extends State<MPinScreen> {
       );
 
       if (!result.success) {
+        _vibrateError();
         setState(() {
           _error = result.message ?? "Failed to save MPIN";
           _mpin = '';
@@ -111,6 +144,15 @@ class _MPinScreenState extends State<MPinScreen> {
       }
 
       await SessionManager.saveLoginSession(widget.username);
+
+      // Navigate immediately after setup success
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+            (route) => false,
+      );
+      return; // early return — don't fall into verify block
     }
 
     if (widget.mode == MPinMode.verify) {
@@ -120,6 +162,7 @@ class _MPinScreenState extends State<MPinScreen> {
       );
 
       if (!result.success) {
+        _vibrateError();
         setState(() {
           _error = result.message ?? "Incorrect MPIN";
           _mpin = '';
@@ -130,15 +173,15 @@ class _MPinScreenState extends State<MPinScreen> {
       }
 
       await SessionManager.saveLoginSession(widget.username);
-    }
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const HomeScreen(),
-      ),
-          (route) => false,
-    );
+      // Navigate immediately after verify success
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+            (route) => false,
+      );
+    }
   }
 
   @override
@@ -262,20 +305,8 @@ class _MPinScreenState extends State<MPinScreen> {
                       ),
                       itemBuilder: (context, index) {
                         final keys = [
-                          '1',
-                          '2',
-                          '3',
-                          '4',
-                          '5',
-                          '6',
-                          '7',
-                          '8',
-                          '9',
-                          '',
-                          '0',
-                          'del'
+                          '1','2','3','4','5','6','7','8','9','','0','del'
                         ];
-
                         final key = keys[index];
 
                         if (key.isEmpty) return const SizedBox();
@@ -318,7 +349,6 @@ class _MPinScreenState extends State<MPinScreen> {
                   ],
 
                   const SizedBox(height: 40),
-
                   const SizedBox(height: 40),
                 ],
               ),
@@ -354,10 +384,7 @@ class _MPinScreenState extends State<MPinScreen> {
         ),
         child: Center(
           child: icon != null
-              ? Icon(
-            icon,
-            color: const Color(0xFF6E665A),
-          )
+              ? Icon(icon, color: const Color(0xFF6E665A))
               : Text(
             label!,
             style: GoogleFonts.poppins(

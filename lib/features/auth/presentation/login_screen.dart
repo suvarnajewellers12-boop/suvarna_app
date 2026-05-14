@@ -1,10 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import '../data/auth_service.dart';
 import '../../../screens/home_screen.dart';
 import 'mpin_screen.dart';
 import 'forgot_password_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -13,15 +15,31 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _identifierController =
-  TextEditingController();
-
-  final TextEditingController _passwordController =
-  TextEditingController();
+  final TextEditingController _identifierController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _warmupBackend(); // backup warmup in case user navigated directly here
+  }
+
+  // Backup warmup — fires when login screen opens
+  Future<void> _warmupBackend() async {
+    try {
+      await http
+          .get(
+        Uri.parse(
+          "https://suvarna-jewellers-customer-backend.vercel.app/api/health",
+        ),
+      )
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {}
+  }
 
   void _submit() async {
     setState(() => _error = null);
@@ -58,9 +76,10 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-// ← REPLACE Navigator block
     final String username = _identifierController.text.trim();
 
+    // Navigate immediately — no extra waiting
+    if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
@@ -161,9 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             GestureDetector(
               onTap: () {
-                setState(() {
-                  _obscurePassword = !_obscurePassword;
-                });
+                setState(() => _obscurePassword = !_obscurePassword);
               },
               child: Icon(
                 _obscurePassword
@@ -295,7 +312,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      // ADD after the Continue ElevatedButton's SizedBox:
+
                       const SizedBox(height: 16),
 
                       Center(
@@ -304,7 +321,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => const ForgotPasswordScreen(),
+                                builder: (_) =>
+                                const ForgotPasswordScreen(),
                               ),
                             );
                           },

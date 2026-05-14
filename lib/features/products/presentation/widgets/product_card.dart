@@ -4,7 +4,6 @@ import '../../models/product_model.dart';
 import 'dart:convert';
 
 class ProductCard extends StatelessWidget {
-
   final Product product;
   final VoidCallback onTap;
 
@@ -16,38 +15,50 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return GestureDetector(
       onTap: onTap,
-
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFF6F0E4),
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFD4AF37), width: 0.8),
+          border: Border.all(
+            color: const Color(0xFFD4AF37),
+            width: 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-
+        // Column fills the fixed grid cell height exactly
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            Container(
-              padding: const EdgeInsets.all(12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: Image.memory(
-                  base64Decode(product.image.split(',').last),
-                  height: 130,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+            // ── Image: Expanded fills whatever height is left after text ──
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 6),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(
+                    base64Decode(product.image.split(',').last),
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             ),
 
+            // ── Name: fixed height, never grows ──────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 2),
               child: Text(
                 product.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.playfairDisplay(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -56,21 +67,19 @@ class ProductCard extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 4),
-
+            // ── Purity + weight ───────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
               child: Text(
-                "Weight: ${product.weight}",
+                "${product.weight} g · ${product.carats}",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: 11,
-                  color: const Color(0xFF7A7267),
+                  color: const Color(0xFF9E8E7E),
                 ),
               ),
             ),
-
-            const SizedBox(height: 10),
-
           ],
         ),
       ),

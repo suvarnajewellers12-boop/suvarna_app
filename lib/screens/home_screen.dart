@@ -14,6 +14,8 @@ import 'package:suvarna_jewellers/features/rates/presentation/rates_screen.dart'
 import 'package:suvarna_jewellers/features/profile/presentation/profile_screen.dart';
 import 'package:suvarna_jewellers/features/schemes/data/payment_service.dart';
 import 'package:suvarna_jewellers/core/notification_service.dart';
+import 'package:flutter/services.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,14 +26,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  bool _showGold = true; // filter for home schemes tab
   Future<List<EnrolledScheme>>? _schemesFuture;
 
-  // Key to directly access SchemesScreen's state
-  final GlobalKey<SchemesScreenState> _schemesKey = GlobalKey<SchemesScreenState>();
+  final GlobalKey<SchemesScreenState> _schemesKey =
+  GlobalKey<SchemesScreenState>();
 
   @override
   void initState() {
     super.initState();
+    EnrolledSchemeService.invalidateCache();
     _schemesFuture = EnrolledSchemeService.getUserSchemes();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await NotificationService.checkAndNotifyDueDates();
@@ -41,9 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void refreshSchemes() {
     if (!mounted) return;
     setState(() {
-      _schemesFuture = EnrolledSchemeService.getUserSchemes(forceRefresh: true);
+      _schemesFuture =
+          EnrolledSchemeService.getUserSchemes(forceRefresh: true);
     });
-    // Also refresh SchemesScreen sitting in IndexedStack
     _schemesKey.currentState?.refreshData();
   }
 
@@ -69,40 +73,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              "assets/images/showroom_bg.png",
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-              child: Container(
-                color: const Color(0xFFF5EBDD).withOpacity(0.55),
+    return PopScope(
+      // Never let the system handle back automatically
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        if (_currentIndex != 0) {
+          // Not on Home tab — go to Home tab first
+          setState(() => _currentIndex = 0);
+        } else {
+          // Already on Home tab — exit app
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        extendBody: true,
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                "assets/images/showroom_bg.png",
+                fit: BoxFit.cover,
               ),
             ),
-          ),
-          SafeArea(
-            child: IndexedStack(
-              index: _currentIndex,
-              children: [
-                _buildHomeContent(),
-                ProductsScreen(),
-                SchemesScreen(key: _schemesKey), // connected via GlobalKey
-                RatesScreen(),
-                const ProfileScreen(),
-              ],
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                child: Container(
+                  color: const Color(0xFFF5EBDD).withOpacity(0.55),
+                ),
+              ),
             ),
-          ),
-        ],
+            SafeArea(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: [
+                  _buildHomeContent(),
+                  ProductsScreen(),
+                  SchemesScreen(key: _schemesKey),
+                  RatesScreen(),
+                  const ProfileScreen(),
+                ],
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: _buildBottomNav(),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
@@ -112,216 +132,405 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFFD4AF37)),
+          );
         }
 
         if (snapshot.hasError) {
           return const Center(child: Text("Something went wrong"));
         }
 
-        final List<EnrolledScheme> schemes = snapshot.data ?? [];
+        final List<EnrolledScheme> allSchemes = snapshot.data ?? [];
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            EnrolledSchemeService.invalidateCache();
-            refreshSchemes();
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 28),
+        // Filter schemes based on selected tab
+        final List<EnrolledScheme> schemes = allSchemes
+            .where((s) => _showGold ? s.isWeightBased : !s.isWeightBased)
+            .toList();
 
-                Row(
-                  children: [
-                    Image.asset(
-                      "assets/images/suvarna_logo.png",
-                      height: 52,
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Fixed Header (never scrolls) ──────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Brand row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "assets/images/suvarna_logo.png",
+                        height: 44,
+                      ),
+                      const SizedBox(width: 14),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Welcome",
+                            "Suvarna Jewellers",
                             style: GoogleFonts.playfairDisplay(
-                              fontSize: 32,
+                              fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF2E2118),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 2),
                           Text(
-                            "Your scheme control room",
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 17,
-                              fontStyle: FontStyle.italic,
-                              color: const Color(0xFF7A6A58),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "\"Every gram you save today becomes tomorrow's celebration.\"",
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 13,
-                              fontStyle: FontStyle.italic,
-                              color: const Color(0xFFB48A2C),
+                            "Your scheme dashboard",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: const Color(0xFF9E8E7E),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
 
-                const SizedBox(height: 36),
+                  const SizedBox(height: 20),
 
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Divider(color: Color(0xFFD4AF37), thickness: 0.4),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        "✨ Your Active Schemes ✨",
+                  // Section label
+                  Row(
+                    children: [
+                      Text(
+                        "Your Schemes",
                         style: GoogleFonts.playfairDisplay(
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                          color: const Color(0xFFB48A2C),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF2E2118),
                         ),
                       ),
-                    ),
-                    const Expanded(
-                      child: Divider(color: Color(0xFFD4AF37), thickness: 0.4),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 36),
-
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Your Schemes",
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF2E2118),
+                      const SizedBox(width: 10),
+                      Container(
+                        height: 1.5,
+                        width: 40,
+                        color: const Color(0xFFD4AF37),
                       ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // ── Gold / Cash filter tabs ─────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEDE0CC),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    const SizedBox(height: 6),
-                    Container(
-                      width: 80,
-                      height: 2,
-                      color: const Color(0xFFD4AF37),
+                    child: Row(
+                      children: [
+                        _buildFilterTab(
+                          label: "✦  Gold Schemes",
+                          selected: _showGold,
+                          onTap: () => setState(() => _showGold = true),
+                        ),
+                        _buildFilterTab(
+                          label: "₹  Cash Schemes",
+                          selected: !_showGold,
+                          onTap: () => setState(() => _showGold = false),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
 
-                const SizedBox(height: 20),
-
-                if (schemes.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 40),
-                    child: Center(child: Text("No schemes enrolled yet")),
-                  )
-                else
-                  ...schemes.map((scheme) => _buildSchemeCard(scheme)),
-
-                const SizedBox(height: 120),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
-          ),
+
+            // ── Scrollable Content ────────────────────────────────
+            Expanded(
+              child: RefreshIndicator(
+                color: const Color(0xFFD4AF37),
+                onRefresh: () async {
+                  EnrolledSchemeService.invalidateCache();
+                  refreshSchemes();
+                },
+                child: schemes.isEmpty
+                    ? ListView(
+                  // ListView needed for RefreshIndicator to work on empty
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [_buildEmptyState()],
+                )
+                    : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                  itemCount: schemes.length,
+                  itemBuilder: (context, index) {
+                    return _buildSchemeCard(schemes[index]);
+                  },
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildSchemeCard(EnrolledScheme scheme) {
-    double progress = scheme.totalMonths > 0
-        ? scheme.monthsPaid / scheme.totalMonths
-        : 0;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: () => _openSchemeDetails(scheme),
-        child: Container(
-          padding: const EdgeInsets.all(20),
+  Widget _buildFilterTab({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: const Color(0xFFF6F0E4).withOpacity(0.97),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFD4AF37), width: 0.6),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            color: selected ? const Color(0xFFD4AF37) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      scheme.name,
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF3B2A1F),
-                      ),
-                    ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    size: 18,
-                    color: Color(0xFFD4AF37),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    "${scheme.monthsPaid}/${scheme.totalMonths} paid",
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: const Color(0xFF6E665A),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    "₹${scheme.amountPaid}",
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFFB48A2C),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: const Color(0xFFE7DBC9),
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFFB48A2C)),
-                ),
-              ),
-            ],
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: selected ? Colors.white : const Color(0xFF6E665A),
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 48),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              _showGold ? Icons.balance : Icons.currency_rupee,
+              size: 52,
+              color: const Color(0xFFD4AF37).withOpacity(0.4),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              _showGold
+                  ? "No gold schemes enrolled yet"
+                  : "No cash schemes enrolled yet",
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                color: const Color(0xFF7A6A58),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Go to Schemes tab to get started",
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: const Color(0xFFB8B0A4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSchemeCard(EnrolledScheme scheme) {
+    double progress =
+    scheme.totalMonths > 0 ? scheme.monthsPaid / scheme.totalMonths : 0;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        children: [
+          // ── Scheme Card ───────────────────────────────────────
+          InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => _openSchemeDetails(scheme),
+            child: Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6F0E4).withOpacity(0.97),
+                borderRadius: BorderRadius.circular(20),
+                border:
+                Border.all(color: const Color(0xFFD4AF37), width: 0.6),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          scheme.name,
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF3B2A1F),
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color:
+                          const Color(0xFFD4AF37).withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          "${scheme.monthsPaid}/${scheme.totalMonths} paid",
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFFB48A2C),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "₹${scheme.amountPaid} paid",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFF6E665A),
+                        ),
+                      ),
+                      Text(
+                        "₹${scheme.amountBalance} remaining",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF9E8E7E),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 6,
+                      backgroundColor: const Color(0xFFE7DBC9),
+                      valueColor: const AlwaysStoppedAnimation(
+                          Color(0xFFB48A2C)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        "Tap to pay →",
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: const Color(0xFFB48A2C),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Wallet Card ───────────────────────────────────────
+          const SizedBox(height: 8),
+          _buildWalletCard(scheme),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWalletCard(EnrolledScheme scheme) {
+    return Container(
+      padding:
+      const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2E2118), Color(0xFF4A3728)],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFD4AF37).withOpacity(0.4),
+          width: 0.8,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37).withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              scheme.isWeightBased
+                  ? Icons.scale_outlined
+                  : Icons.account_balance_wallet_outlined,
+              color: const Color(0xFFD4AF37),
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  scheme.isWeightBased
+                      ? "Gold Accumulated"
+                      : "Cash Saved",
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: const Color(0xFFD4AF37).withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  scheme.isWeightBased
+                      ? "${scheme.accumulatedGrams.toStringAsFixed(3)} g"
+                      : "₹${scheme.amountPaid}",
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFFD4AF37),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD4AF37).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              scheme.isWeightBased ? "Gold" : "Cash",
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFFD4AF37),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -358,6 +567,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           _detailItem("Last Payment Date", scheme.lastPaymentDate),
           _detailItem("Next Due Date", scheme.nextDueDate),
+          if (scheme.isWeightBased)
+            _detailItem(
+              "Gold Accumulated",
+              "${scheme.accumulatedGrams.toStringAsFixed(3)} g",
+            ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: scheme.monthsPaid >= scheme.totalMonths
@@ -367,10 +581,10 @@ class _HomeScreenState extends State<HomeScreen> {
               PaymentService.startPayment(
                 context: context,
                 schemeId: scheme.schemeId,
-                amount: (scheme.totalAmount / scheme.totalMonths).round(),
+                amount: scheme.monthlyAmount,
                 onSuccess: () {
                   EnrolledSchemeService.invalidateCache();
-                  refreshSchemes(); // refreshes both Home + Schemes tab
+                  refreshSchemes();
                 },
               );
             },
@@ -387,7 +601,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Text(
               scheme.monthsPaid >= scheme.totalMonths
                   ? "Completed"
-                  : "Pay Now — ₹${(scheme.totalAmount / scheme.totalMonths).round()}/month",
+                  : "Pay Now — ₹${scheme.monthlyAmount}/month",
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -422,18 +636,20 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildBottomNav() {
     return BottomNavigationBar(
       currentIndex: _currentIndex,
-      onTap: (i) {
-        setState(() => _currentIndex = i);
-      },
+      onTap: (i) => setState(() => _currentIndex = i),
       selectedItemColor: const Color(0xFFD4AF37),
       unselectedItemColor: const Color(0xFF7A7267),
       type: BottomNavigationBarType.fixed,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: "Products"),
-        BottomNavigationBarItem(icon: Icon(Icons.description), label: "Schemes"),
-        BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: "Rates"),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_bag), label: "Products"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.description), label: "Schemes"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.trending_up), label: "Rates"),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person), label: "Profile"),
       ],
     );
   }

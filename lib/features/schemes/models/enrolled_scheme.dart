@@ -9,6 +9,9 @@ class EnrolledScheme {
   final int totalMonths;
   final String lastPaymentDate;
   final String nextDueDate;
+  final bool isWeightBased;
+  final double accumulatedGrams;
+  final int monthlyAmount;
 
   EnrolledScheme({
     required this.id,
@@ -21,5 +24,8 @@ class EnrolledScheme {
     required this.totalMonths,
     required this.lastPaymentDate,
     required this.nextDueDate,
+    required this.isWeightBased,
+    required this.accumulatedGrams,
+    required this.monthlyAmount,
   });
 }

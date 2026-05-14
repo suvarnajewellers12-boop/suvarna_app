@@ -13,16 +13,9 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/send-otp"),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "phone": mobile,
-        }),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"phone": mobile}),
       ).timeout(const Duration(seconds: 20));
-
-      print("STATUS CODE: ${response.statusCode}");
-      print("BODY: ${response.body}");
 
       final data = jsonDecode(response.body);
 
@@ -35,10 +28,7 @@ class AuthService {
         message: data["message"] ?? "OTP send failed",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -49,13 +39,8 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/verify-otp"),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: jsonEncode({
-          "phone": mobile,
-          "otp": otp,
-        }),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"phone": mobile, "otp": otp}),
       );
 
       final data = jsonDecode(response.body);
@@ -69,10 +54,7 @@ class AuthService {
         message: data["message"] ?? "Invalid OTP",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -84,9 +66,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/signup"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "name": fullName,
           "phone": mobile,
@@ -104,19 +84,17 @@ class AuthService {
           await SessionManager.saveToken(token);
           await SessionManager.saveLoginSession(mobile);
 
-          if (data["user"] != null && data["user"]["id"] != null) {
-            await SessionManager.saveUserId(data["user"]["id"].toString());
+          if (user != null && user["id"] != null) {
+            await SessionManager.saveUserId(user["id"].toString());
           }
         }
 
-        if (user != null && user["id"] != null) {
-          await SessionManager.saveUserId(user["id"].toString());
+        final userName = user?["name"]?.toString() ?? "";
+        if (userName.isNotEmpty) {
+          await SessionManager.saveUserName(userName);
         }
 
-        return AuthResponse(
-          success: true,
-          username: mobile,
-        );
+        return AuthResponse(success: true, username: mobile);
       }
 
       return AuthResponse(
@@ -124,10 +102,7 @@ class AuthService {
         message: data["message"] ?? "Signup failed",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -138,9 +113,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/login"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": identifier,
           "password": password,
@@ -157,22 +130,22 @@ class AuthService {
           await SessionManager.saveToken(token);
           await SessionManager.saveLoginSession(identifier);
 
-          if (data["user"] != null && data["user"]["id"] != null) {
-            await SessionManager.saveUserId(data["user"]["id"].toString());
+          if (user != null && user["id"] != null) {
+            await SessionManager.saveUserId(user["id"].toString());
           }
         }
 
-        if (user != null && user["id"] != null) {
-          await SessionManager.saveUserId(user["id"].toString());
+        final userName = user?["name"]?.toString() ?? "";
+        if (userName.isNotEmpty) {
+          await SessionManager.saveUserName(userName);
         }
 
-        // ← ADD: read mpinExists flag from backend
         final bool mpinExists = data["mpinExists"] ?? false;
 
         return AuthResponse(
           success: true,
           username: identifier,
-          mpinExists: mpinExists,   // ← ADD
+          mpinExists: mpinExists,
         );
       }
 
@@ -181,10 +154,7 @@ class AuthService {
         message: data["message"] ?? "Login failed",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -194,7 +164,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/send-otp"),
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": mobile,
           "purpose": "forgot_password",
@@ -223,7 +193,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/verify-otp"),
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": mobile,
           "otp": otp,
@@ -254,7 +224,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/forgot-password"),
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": mobile,
           "otp": otp,
@@ -284,9 +254,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/set-mpin"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": username,
           "mpin": mpin,
@@ -305,10 +273,7 @@ class AuthService {
         message: data["message"] ?? "MPIN save failed",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -318,8 +283,10 @@ class AuthService {
     return AuthResponse(success: true);
   }
 
-
-
+  // ── FIXED: now reads token + userId from verify-mpin response ──────────
+  // Previously: only checked statusCode == 200, never saved token
+  // Now: saves token + userId + loginSession exactly like login() does
+  // This is why MPIN login showed empty data — no token = all API calls failed
   static Future<AuthResponse> verifyMpin({
     required String username,
     required String mpin,
@@ -327,9 +294,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/verify-mpin"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": username,
           "mpin": mpin,
@@ -339,6 +304,30 @@ class AuthService {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
+        // Save token if backend returns one (same as login flow)
+        final token = data["token"];
+        final user = data["user"];
+
+        if (token != null) {
+          await SessionManager.saveToken(token);
+          await SessionManager.saveLoginSession(username);
+
+          if (user != null && user["id"] != null) {
+            await SessionManager.saveUserId(user["id"].toString());
+          }
+
+          // Save name in case it wasn't saved before (e.g. fresh install)
+          final userName = user?["name"]?.toString() ?? "";
+          if (userName.isNotEmpty) {
+            await SessionManager.saveUserName(userName);
+          }
+        } else {
+          // Backend doesn't return token from verify-mpin —
+          // the existing token in SessionManager is still valid (7d expiry)
+          // just refresh the login session timestamp
+          await SessionManager.saveLoginSession(username);
+        }
+
         return AuthResponse(success: true);
       }
 
@@ -347,10 +336,7 @@ class AuthService {
         message: data["message"] ?? "Incorrect MPIN",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -360,9 +346,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/send-otp"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": mobile,
           "purpose": "forgot_mpin",
@@ -380,10 +364,7 @@ class AuthService {
         message: data["message"] ?? "OTP send failed",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -394,9 +375,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/verify-otp"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": mobile,
           "otp": otp,
@@ -415,10 +394,7 @@ class AuthService {
         message: data["message"] ?? "Invalid OTP",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 
@@ -429,9 +405,7 @@ class AuthService {
     try {
       final response = await http.post(
         Uri.parse("$baseUrl/reset-mpin"),
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "phone": mobile,
           "mpin": mpin,
@@ -450,10 +424,7 @@ class AuthService {
         message: data["message"] ?? "MPIN reset failed",
       );
     } catch (e) {
-      return AuthResponse(
-        success: false,
-        message: e.toString(),
-      );
+      return AuthResponse(success: false, message: e.toString());
     }
   }
 }

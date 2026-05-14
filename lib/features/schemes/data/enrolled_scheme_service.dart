@@ -4,7 +4,6 @@ import '../../../core/session_manager.dart';
 import '../models/enrolled_scheme.dart';
 
 class EnrolledSchemeService {
-  // In-memory cache — lives for the app session
   static List<EnrolledScheme>? _cachedSchemes;
   static DateTime? _lastFetched;
   static const _cacheDuration = Duration(minutes: 5);
@@ -14,46 +13,45 @@ class EnrolledSchemeService {
     return DateTime.now().difference(_lastFetched!) < _cacheDuration;
   }
 
-  // Call this after a payment — forces next getUserSchemes() to hit network
   static void invalidateCache() {
     _cachedSchemes = null;
     _lastFetched = null;
   }
 
   static Future<List<EnrolledScheme>> getUserSchemes({bool forceRefresh = false}) async {
-    // Return cache if valid and not forced
-    if (!forceRefresh && _isCacheValid) {
-      return _cachedSchemes!;
-    }
+    if (!forceRefresh && _isCacheValid) return _cachedSchemes!;
 
     try {
       final token = await SessionManager.getToken();
       if (token == null) return [];
 
       final response = await http.get(
-        Uri.parse(
-          "https://suvarna-jewellers-customer-backend.vercel.app/api/schemes/my",
-        ),
+        Uri.parse("https://suvarna-jewellers-customer-backend.vercel.app/api/schemes/my"),
         headers: {"Authorization": "Bearer $token"},
       );
 
       if (response.statusCode != 200) return _cachedSchemes ?? [];
 
       final data = jsonDecode(response.body);
-      final List schemes = data["schemes"] ?? [];
+      final List enrollments = data["schemes"] ?? []; // these ARE enrollments directly
 
-      final result = schemes.map<EnrolledScheme>((e) {
-        final scheme = e["Scheme"] ?? {};
+      final List<EnrolledScheme> result = [];
+
+      for (final e in enrollments) {
+        final scheme = e["Scheme"] ?? {}; // capital S — nested scheme details
+
         final monthlyAmount = int.tryParse(scheme["monthlyAmount"].toString()) ?? 0;
         final durationMonths = int.tryParse(scheme["durationMonths"].toString()) ?? 1;
         final installmentsPaid = int.tryParse(e["installmentsPaid"].toString()) ?? 0;
         final totalPaid = int.tryParse(e["totalPaid"].toString()) ?? 0;
         final remainingAmount = int.tryParse(e["remainingAmount"].toString()) ?? 0;
+        final isWeightBased = scheme["isWeightBased"] == true;
+        final accumulatedGrams = double.tryParse(e["accumulatedGrams"].toString()) ?? 0.0;
 
         final rawDate = DateTime.tryParse(e["startDate"]?.toString() ?? "");
 
-        final lastDate = rawDate != null
-            ? DateTime(rawDate.year, rawDate.month + (installmentsPaid > 0 ? installmentsPaid - 1 : 0), rawDate.day)
+        final lastDate = rawDate != null && installmentsPaid > 0
+            ? DateTime(rawDate.year, rawDate.month + installmentsPaid - 1, rawDate.day)
             : null;
 
         final formattedDate = lastDate != null
@@ -70,7 +68,7 @@ class EnrolledSchemeService {
             ? "${nextDate.day.toString().padLeft(2, '0')}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.year}"
             : "";
 
-        return EnrolledScheme(
+        result.add(EnrolledScheme(
           id: e["id"]?.toString() ?? "",
           schemeId: e["schemeId"]?.toString() ?? "",
           name: scheme["name"]?.toString() ?? "Unnamed Scheme",
@@ -81,16 +79,16 @@ class EnrolledSchemeService {
           totalMonths: durationMonths,
           lastPaymentDate: formattedDate,
           nextDueDate: formattedNextDate,
-        );
-      }).toList();
+          isWeightBased: isWeightBased,
+          accumulatedGrams: accumulatedGrams,
+          monthlyAmount: monthlyAmount,
+        ));
+      }
 
-      // Store in cache
       _cachedSchemes = result;
       _lastFetched = DateTime.now();
-
       return result;
     } catch (e) {
-      // On error, return stale cache if available — better than empty
       return _cachedSchemes ?? [];
     }
   }

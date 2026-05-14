@@ -1,12 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:suvarna_jewellers/core/session_manager.dart';
-import 'package:suvarna_jewellers/features/auth/data/local_auth_database.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/notifications_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/contact_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/widgets/profile_menu_tile.dart';
 import 'package:suvarna_jewellers/screens/auth_choice_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/coupons_screen.dart';
+
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -25,26 +25,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUser() async {
+    // Read directly from SessionManager — no LocalAuthDatabase needed
     final username = await SessionManager.getUsername();
+    final name = await SessionManager.getUserName();
 
-    if (username == null) return;
-
-    final user = await LocalAuthDatabase.findByUsername(username);
-
-    print("USERNAME: $username");
-    print("USER DATA: $user");
-
-    final dbName = user?["name"]?.toString().trim();
-
-    setState(() {
-      mobile = user?["phone"] ?? username;
-
-      fullName = (dbName != null && dbName.isNotEmpty)
-          ? dbName
-          : username.split(RegExp(r'[^a-zA-Z]')).first;
-
-      print("FINAL NAME: $fullName");
-    });
+    if (mounted) {
+      setState(() {
+        mobile = username ?? "";
+        // Show saved name if available, otherwise fall back to phone number
+        fullName = (name != null && name.trim().isNotEmpty)
+            ? name
+            : (username ?? "Customer");
+      });
+    }
   }
 
   Future<void> _logout() async {
@@ -137,9 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                (fullName != null && fullName!.trim().isNotEmpty)
-                                    ? fullName!
-                                    : "Customer",
+                                fullName ?? "Customer",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
@@ -185,8 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.message,
                             title: "Contact Us",
                             subtitle: "Get in touch with showroom",
-                            onTap: () =>
-                                push(context, const ContactScreen()),
+                            onTap: () => push(context, const ContactScreen()),
                           ),
                         ],
                       ),

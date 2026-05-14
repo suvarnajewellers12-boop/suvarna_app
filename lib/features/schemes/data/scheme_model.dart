@@ -4,6 +4,7 @@ class SchemeModel {
   final int monthlyAmount;
   final int durationMonths;
   final int maturityAmount;
+  final bool isWeightBased;
 
   const SchemeModel({
     required this.id,
@@ -11,6 +12,7 @@ class SchemeModel {
     required this.monthlyAmount,
     required this.durationMonths,
     required this.maturityAmount,
+    this.isWeightBased = false,
   });
 
   factory SchemeModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class SchemeModel {
       monthlyAmount: int.tryParse(json['monthlyAmount'].toString()) ?? 0,
       durationMonths: int.tryParse(json['durationMonths'].toString()) ?? 0,
       maturityAmount: int.tryParse(json['maturityAmount'].toString()) ?? 0,
+      isWeightBased: json['isWeightBased'] == true,
     );
   }
 }

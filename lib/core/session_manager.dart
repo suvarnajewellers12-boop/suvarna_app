@@ -5,6 +5,8 @@ class SessionManager {
   static const String _keyUsername = 'current_username';
   static const String _keyToken = 'token';
   static const String _keyUserId = 'user_id';
+  static const String _keyLastPhone = 'last_phone';
+  static const String _keyLastName = 'last_name';
 
   // =========================
   // TOKEN MANAGEMENT
@@ -40,6 +42,20 @@ class SessionManager {
   }
 
   // =========================
+  // USER NAME MANAGEMENT
+  // =========================
+
+  static Future<void> saveUserName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLastName, name);
+  }
+
+  static Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLastName);
+  }
+
+  // =========================
   // LOGIN SESSION MANAGEMENT
   // =========================
 
@@ -47,14 +63,25 @@ class SessionManager {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyLoggedIn, true);
     await prefs.setString(_keyUsername, username);
+    // Persists across logout so we know last logged-in phone
+    await prefs.setString(_keyLastPhone, username);
   }
 
+  // clearSession clears ONLY active login state
+  // token + userId + lastPhone + lastName are intentionally kept
+  // so MPIN login can reuse the existing token without a new API call
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Only clear the active login flags
     await prefs.remove(_keyLoggedIn);
     await prefs.remove(_keyUsername);
-    await prefs.remove(_keyToken);
-    await prefs.remove(_keyUserId);
+
+    // DO NOT remove these — MPIN login depends on them surviving logout:
+    // _keyToken      → reused by all APIs after MPIN login
+    // _keyUserId     → reused for payment and scheme calls
+    // _keyLastPhone  → shown on AuthChoiceScreen welcome back card
+    // _keyLastName   → shown on AuthChoiceScreen welcome back card
   }
 
   static Future<bool> isLoggedIn() async {
@@ -65,6 +92,18 @@ class SessionManager {
   static Future<String?> getUsername() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyUsername);
+  }
+
+  // Returns phone of last logged-in user — survives logout
+  static Future<String?> getLastPhone() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLastPhone);
+  }
+
+  // True if someone has logged in before on this device
+  static Future<bool> hasPreviousSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLastPhone) != null;
   }
 
   // =========================
