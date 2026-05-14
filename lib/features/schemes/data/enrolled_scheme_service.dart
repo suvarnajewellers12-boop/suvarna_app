@@ -68,6 +68,12 @@ class EnrolledSchemeService {
             ? "${nextDate.day.toString().padLeft(2, '0')}-${nextDate.month.toString().padLeft(2, '0')}-${nextDate.year}"
             : "";
 
+        final List paymentHistory = e["PaymentHistory"] ?? [];
+        final double lastPaymentGrams = paymentHistory.isNotEmpty
+            ? double.tryParse(
+            paymentHistory[0]["gramsAdded"]?.toString() ?? "0") ?? 0.0
+            : 0.0;
+
         result.add(EnrolledScheme(
           id: e["id"]?.toString() ?? "",
           schemeId: e["schemeId"]?.toString() ?? "",
@@ -82,6 +88,7 @@ class EnrolledSchemeService {
           isWeightBased: isWeightBased,
           accumulatedGrams: accumulatedGrams,
           monthlyAmount: monthlyAmount,
+            lastPaymentGrams: lastPaymentGrams
         ));
       }
 

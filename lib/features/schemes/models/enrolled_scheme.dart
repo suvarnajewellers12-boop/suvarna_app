@@ -12,6 +12,7 @@ class EnrolledScheme {
   final bool isWeightBased;
   final double accumulatedGrams;
   final int monthlyAmount;
+  final double lastPaymentGrams; // NEW: grams added in most recent payment
 
   EnrolledScheme({
     required this.id,
@@ -27,5 +28,6 @@ class EnrolledScheme {
     required this.isWeightBased,
     required this.accumulatedGrams,
     required this.monthlyAmount,
+    this.lastPaymentGrams = 0.0, // NEW
   });
 }

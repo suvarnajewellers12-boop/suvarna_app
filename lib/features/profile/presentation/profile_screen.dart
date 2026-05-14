@@ -6,6 +6,7 @@ import 'package:suvarna_jewellers/features/profile/presentation/screens/contact_
 import 'package:suvarna_jewellers/features/profile/presentation/widgets/profile_menu_tile.dart';
 import 'package:suvarna_jewellers/screens/auth_choice_screen.dart';
 import 'package:suvarna_jewellers/features/profile/presentation/screens/coupons_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -41,8 +42,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout() async {
-    await SessionManager.clearSession();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFF6F0E4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Text(
+          "Logout",
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF3B2A1F),
+          ),
+        ),
+        content: Text(
+          "Are you sure you want to logout?",
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: const Color(0xFF6E665A),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              "Cancel",
+              style: GoogleFonts.poppins(
+                color: const Color(0xFF9E8E7E),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade400,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              "Logout",
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
 
+    if (confirm != true) return;
+
+    await SessionManager.clearSession();
+    if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const AuthChoiceScreen()),

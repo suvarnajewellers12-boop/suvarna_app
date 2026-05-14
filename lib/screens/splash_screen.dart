@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'auth_choice_screen.dart';
 import '../core/session_manager.dart';
@@ -15,7 +14,6 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _mainController;
-
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _shimmerAnimation;
@@ -24,8 +22,11 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    _mainController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 3));
+    // CHANGED: 3s → 2s
+    _mainController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
 
     _scaleAnimation =
         Tween<double>(begin: 0.85, end: 1.0).animate(CurvedAnimation(
@@ -47,14 +48,15 @@ class _SplashScreenState extends State<SplashScreen>
 
     _mainController.forward();
 
-    Future.delayed(const Duration(seconds: 3), () async {
+    // CHANGED: 3s → 2s
+    Future.delayed(const Duration(seconds: 2), () async {
       if (!mounted) return;
 
       final isLoggedIn = await SessionManager.isLoggedIn();
 
       if (isLoggedIn) {
         final username = await SessionManager.getUsername();
-
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -65,6 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         );
       } else {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -88,8 +91,8 @@ class _SplashScreenState extends State<SplashScreen>
         return ShaderMask(
           shaderCallback: (bounds) {
             return LinearGradient(
-              begin: Alignment(-1, 0),
-              end: Alignment(1, 0),
+              begin: const Alignment(-1, 0),
+              end: const Alignment(1, 0),
               colors: [
                 Colors.transparent,
                 Colors.white.withOpacity(0.4),
@@ -106,10 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
           child: child,
         );
       },
-      child: Image.asset(
-        'assets/images/suvarna_logo.png',
-        width: 120,
-      ),
+      child: Image.asset('assets/images/suvarna_logo.png', width: 120),
     );
   }
 
@@ -117,25 +117,21 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5EBDD),
-      body: Stack(
-        children: [
-          Center(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Container(
-                  padding: const EdgeInsets.all(28),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.85),
-                  ),
-                  child: _buildShimmer(),
-                ),
+      body: Center(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.85),
               ),
+              child: _buildShimmer(),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

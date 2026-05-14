@@ -73,19 +73,72 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return PopScope(
-      // Never let the system handle back automatically
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
 
         if (_currentIndex != 0) {
-          // Not on Home tab — go to Home tab first
           setState(() => _currentIndex = 0);
-        } else {
-          // Already on Home tab — exit app
+          return;
+        }
+
+        // Already on Home tab — ask before exiting
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFFF6F0E4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Text(
+              "Exit App",
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF3B2A1F),
+              ),
+            ),
+            content: Text(
+              "Are you sure you want to exit?",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: const Color(0xFF6E665A),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(
+                  "Stay",
+                  style: GoogleFonts.poppins(
+                    color: const Color(0xFF9E8E7E),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD4AF37),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  "Exit",
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
           SystemNavigator.pop();
         }
       },
@@ -456,8 +509,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildWalletCard(EnrolledScheme scheme) {
     return Container(
-      padding:
-      const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF2E2118), Color(0xFF4A3728)],
@@ -470,66 +522,97 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 0.8,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD4AF37).withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              scheme.isWeightBased
-                  ? Icons.scale_outlined
-                  : Icons.account_balance_wallet_outlined,
-              color: const Color(0xFFD4AF37),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  scheme.isWeightBased
-                      ? "Gold Accumulated"
-                      : "Cash Saved",
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    color: const Color(0xFFD4AF37).withOpacity(0.8),
-                  ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4AF37).withOpacity(0.15),
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 2),
-                Text(
+                child: Icon(
                   scheme.isWeightBased
-                      ? "${scheme.accumulatedGrams.toStringAsFixed(3)} g"
-                      : "₹${scheme.amountPaid}",
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                      ? Icons.scale_outlined
+                      : Icons.account_balance_wallet_outlined,
+                  color: const Color(0xFFD4AF37),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      scheme.isWeightBased ? "Gold Accumulated" : "Cash Saved",
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: const Color(0xFFD4AF37).withOpacity(0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      scheme.isWeightBased
+                          ? "${scheme.accumulatedGrams.toStringAsFixed(3)} g"
+                          : "₹${scheme.amountPaid}",
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFFD4AF37),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4AF37).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  scheme.isWeightBased ? "Gold" : "Cash",
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                     color: const Color(0xFFD4AF37),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          Container(
-            padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD4AF37).withOpacity(0.12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              scheme.isWeightBased ? "Gold" : "Cash",
-              style: GoogleFonts.poppins(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFFD4AF37),
+
+          // NEW: This month's addition
+          if (scheme.isWeightBased && scheme.lastPaymentGrams > 0) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFD4AF37).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.arrow_upward,
+                    size: 13,
+                    color: Color(0xFFD4AF37),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "This month: +${scheme.lastPaymentGrams.toStringAsFixed(3)} g",
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: const Color(0xFFD4AF37).withOpacity(0.9),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
