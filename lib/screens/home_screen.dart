@@ -245,7 +245,40 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   const SizedBox(height: 20),
 
-                  // Section label
+                  FutureBuilder<String?>(
+                    future: SessionManager.getUserName(),
+                    builder: (context, snapshot) {
+                      final username = snapshot.data ?? "Member";
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Hello, $username",
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF2E2118),
+                            ),
+                          ),
+
+                          const SizedBox(height: 4),
+
+                          //Text(
+                           // "Welcome back to your savings journey",
+                            //style: GoogleFonts.poppins(
+                              //fontSize: 13,
+                              //color: const Color(0xFF8B7B6A),
+                            //),
+                          //),
+                        ],
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+// Section label
                   Row(
                     children: [
                       Text(

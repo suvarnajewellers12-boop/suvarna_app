@@ -157,13 +157,13 @@ class _ContactScreenState extends State<ContactScreen> {
                         _infoRow(
                           Icons.email_outlined,
                           "Email",
-                          "support@suvarnajewellers.com",
+                          "suvarnajewellers12@gmail.com",
                         ),
                         const SizedBox(height: 16),
                         _infoRow(
                           Icons.location_on_outlined,
                           "Address",
-                          "Suvarna Jewellers Showroom\nD.No 10-45, Main Road, Gajuwaka\nVisakhapatnam, Andhra Pradesh – 530026",
+                          "Suvarna Jewellers Showroom\nD.No. 13-1-12, Main Road, Near YSR Statue, New Gajuwaka\nVisakhapatnam, Andhra Pradesh – 530026",
                         ),
                       ],
                     ),
