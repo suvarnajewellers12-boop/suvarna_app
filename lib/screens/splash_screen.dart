@@ -22,60 +22,79 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // CHANGED: 3s → 2s
     _mainController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     );
 
-    _scaleAnimation =
-        Tween<double>(begin: 0.85, end: 1.0).animate(CurvedAnimation(
-          parent: _mainController,
-          curve: Curves.easeOutCubic,
-        ));
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
 
-    _fadeAnimation =
-        Tween<double>(begin: 0.0, end: 1.0).animate(CurvedAnimation(
-          parent: _mainController,
-          curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
-        ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+      ),
+    );
 
-    _shimmerAnimation =
-        Tween<double>(begin: -1.0, end: 2.0).animate(CurvedAnimation(
-          parent: _mainController,
-          curve: const Interval(0.3, 0.8, curve: Curves.easeInOut),
-        ));
+    _shimmerAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(
+        parent: _mainController,
+        curve: const Interval(0.3, 0.8, curve: Curves.easeInOut),
+      ),
+    );
 
+    // Fire off the visual animation timeline
     _mainController.forward();
 
-    // CHANGED: 3s → 2s
-    Future.delayed(const Duration(seconds: 2), () async {
-      if (!mounted) return;
+    // ✅ OPTIMIZED: Run data storage queries concurrently alongside the animation timeline
+    _handleAppRouting();
+  }
 
-      final isLoggedIn = await SessionManager.isLoggedIn();
+  /// Manages concurrent execution of disk verification and visual timers
+  Future<void> _handleAppRouting() async {
+    // 1. Instantly spin up storage lookups on background threads
+    final Future<bool> loginCheckTask = SessionManager.isLoggedIn();
+    final Future<String?> usernameCheckTask = SessionManager.getUsername();
 
-      if (isLoggedIn) {
-        final username = await SessionManager.getUsername();
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MPinScreen(
-              mode: MPinMode.verify,
-              username: username ?? '',
-            ),
+    // 2. Instantiate a minimum visual hold timer matching your animation duration
+    final Future<void> visualAnimationTimer = Future.delayed(const Duration(seconds: 2));
+
+    // 3. Await all asynchronous processes concurrently using Future.wait
+    final List<dynamic> taskResults = await Future.wait([
+      loginCheckTask,
+      visualAnimationTimer,
+      usernameCheckTask,
+    ]);
+
+    final bool isLoggedIn = taskResults[0] as bool;
+    final String? username = taskResults[2] as String?;
+
+    if (!mounted) return;
+
+    // 4. Execute transition routing precisely as the animation timeline settles
+    if (isLoggedIn) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MPinScreen(
+            mode: MPinMode.verify,
+            username: username ?? '',
           ),
-        );
-      } else {
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => const AuthChoiceScreen(),
-          ),
-        );
-      }
-    });
+        ),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AuthChoiceScreen(),
+        ),
+      );
+    }
   }
 
   @override
